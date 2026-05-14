@@ -1,0 +1,17 @@
+package auth
+
+import "time"
+
+type User struct {
+	ID              string     `db:"id"`
+	FullName        string     `db:"full_name"`
+	Phone           string     `db:"phone"`
+	Email           *string    `db:"email"`
+	PasswordHash    string     `db:"password_hash"`
+	Role            string     `db:"role"`
+	Status          string     `db:"status"`
+	PhoneVerified   bool       `db:"phone_verified"`
+	PhoneVerifiedAt *time.Time `db:"phone_verified_at"`
+	CreatedAt       time.Time  `db:"created_at"`
+	UpdatedAt       time.Time  `db:"updated_at"`
+}

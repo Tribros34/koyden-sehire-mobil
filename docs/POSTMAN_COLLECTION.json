@@ -1,0 +1,202 @@
+{
+  "info": {
+    "name": "Köyden Şehre API",
+    "description": "Farm-to-city marketplace backend — complete API collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8080/api/v1" },
+    { "key": "admin_token", "value": "" },
+    { "key": "farmer_token", "value": "" },
+    { "key": "app_id", "value": "" },
+    { "key": "product_id", "value": "" },
+    { "key": "phone", "value": "05321234567" }
+  ],
+  "item": [
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/health"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Admin Login",
+          "event": [{ "listen": "test", "script": { "exec": ["const r = pm.response.json();", "if(r.success) pm.collectionVariables.set('admin_token', r.data.access_token);"] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/auth/login",
+            "body": { "mode": "raw", "raw": "{\"phone\":\"05000000000\",\"password\":\"admin123\"}" }
+          }
+        },
+        {
+          "name": "Farmer Login",
+          "event": [{ "listen": "test", "script": { "exec": ["const r = pm.response.json();", "if(r.success) pm.collectionVariables.set('farmer_token', r.data.access_token);"] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/auth/login",
+            "body": { "mode": "raw", "raw": "{\"phone\":\"{{phone}}\",\"password\":\"test1234\"}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "OTP",
+      "item": [
+        {
+          "name": "Send OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/otp/send",
+            "body": { "mode": "raw", "raw": "{\"phone\":\"{{phone}}\"}" }
+          }
+        },
+        {
+          "name": "Verify OTP",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/otp/verify",
+            "body": { "mode": "raw", "raw": "{\"phone\":\"{{phone}}\",\"code\":\"REPLACE_WITH_CODE\"}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Public",
+      "item": [
+        {
+          "name": "Categories",
+          "request": { "method": "GET", "url": "{{base_url}}/categories" }
+        },
+        {
+          "name": "Validate Invite Code",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/invites/validate?code=KYS-FOUNDER", "query": [{ "key": "code", "value": "KYS-FOUNDER" }] } }
+        },
+        {
+          "name": "Products List",
+          "request": { "method": "GET", "url": { "raw": "{{base_url}}/products?page=1&limit=20", "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "20" }] } }
+        },
+        {
+          "name": "Product Detail",
+          "request": { "method": "GET", "url": "{{base_url}}/products/{{product_id}}" }
+        }
+      ]
+    },
+    {
+      "name": "Farmer Application",
+      "item": [
+        {
+          "name": "Submit Application",
+          "event": [{ "listen": "test", "script": { "exec": ["const r = pm.response.json();", "if(r.success) pm.collectionVariables.set('app_id', r.data.application_id);"] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/farmer-applications",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"invite_code\":\"KYS-FOUNDER\",\"full_name\":\"Test Çiftçi\",\"phone\":\"{{phone}}\",\"email\":\"test@example.com\",\"password\":\"test1234\",\"business_name\":\"Test Çiftliği\",\"producer_type\":\"family_producer\",\"city\":\"Bursa\",\"district\":\"Kestel\",\"village\":\"Saitabat\",\"bio\":\"Taze sebze ve meyve.\",\"product_categories\":[\"meyve\"],\"product_examples\":\"Çilek\",\"production_place_type\":\"family_land\",\"kvkk_accepted\":true,\"platform_terms_accepted\":true,\"declares_own_production\":true,\"declares_accurate_location\":true,\"declares_not_intermediary\":true}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/admin/dashboard"
+          }
+        },
+        {
+          "name": "Applications List",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/admin/applications?status=pending", "query": [{ "key": "status", "value": "pending" }] }
+          }
+        },
+        {
+          "name": "Approve Application",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/admin/applications/{{app_id}}/approve",
+            "body": { "mode": "raw", "raw": "{\"is_founding_farmer\":true,\"invite_quota\":5}" }
+          }
+        },
+        {
+          "name": "Reject Application",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/admin/applications/{{app_id}}/reject",
+            "body": { "mode": "raw", "raw": "{\"rejection_reason\":\"other\",\"admin_note\":\"Test reddi\"}" }
+          }
+        },
+        {
+          "name": "Approve Product",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": "{{base_url}}/admin/products/{{product_id}}/approve"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Farmer",
+      "item": [
+        {
+          "name": "Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{farmer_token}}" }],
+            "url": "{{base_url}}/farmer/profile"
+          }
+        },
+        {
+          "name": "My Products",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{farmer_token}}" }],
+            "url": "{{base_url}}/farmer/products"
+          }
+        },
+        {
+          "name": "Create Product",
+          "event": [{ "listen": "test", "script": { "exec": ["const r = pm.response.json();", "if(r.success) pm.collectionVariables.set('product_id', r.data.id);"] } }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{farmer_token}}" }, { "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/farmer/products",
+            "body": { "mode": "raw", "raw": "{\"category_id\":\"REPLACE_WITH_CATEGORY_ID\",\"title\":\"Günlük Köy Çileği\",\"description\":\"Taze çilek.\",\"price\":120,\"unit\":\"kg\",\"city\":\"Bursa\",\"district\":\"Kestel\",\"village\":\"Saitabat\",\"stock_status\":\"available\",\"image_urls\":[]}" }
+          }
+        },
+        {
+          "name": "My Invites",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{farmer_token}}" }],
+            "url": "{{base_url}}/farmer/invites"
+          }
+        }
+      ]
+    }
+  ]
+}

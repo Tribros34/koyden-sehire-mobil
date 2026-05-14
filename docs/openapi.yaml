@@ -1,0 +1,360 @@
+openapi: "3.0.3"
+info:
+  title: Köyden Şehre API
+  version: "1.0.0"
+  description: Farm-to-city marketplace backend API
+  contact:
+    name: Köyden Şehre
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Development
+  - url: https://api.koydensehire.com/api/v1
+    description: Production
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        success: { type: boolean, example: false }
+        error:
+          type: object
+          properties:
+            code: { type: string }
+            message: { type: string }
+
+    Pagination:
+      type: object
+      properties:
+        page: { type: integer }
+        limit: { type: integer }
+        total: { type: integer }
+        total_pages: { type: integer }
+
+    Category:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        slug: { type: string }
+        parent_id: { type: string, format: uuid, nullable: true }
+        sort_order: { type: integer }
+        is_active: { type: boolean }
+        children:
+          type: array
+          items: { $ref: '#/components/schemas/Category' }
+
+    Product:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        description: { type: string }
+        price: { type: number }
+        unit: { type: string }
+        city: { type: string }
+        district: { type: string }
+        village: { type: string }
+        status: { type: string, enum: [pending, active, rejected, hidden] }
+        stock_status: { type: string, enum: [available, out_of_stock, limited] }
+        created_at: { type: string, format: date-time }
+        images:
+          type: array
+          items:
+            type: object
+            properties:
+              url: { type: string }
+              sort_order: { type: integer }
+        category:
+          type: object
+          properties:
+            id: { type: string }
+            name: { type: string }
+            slug: { type: string }
+            parent:
+              type: object
+              nullable: true
+              properties:
+                id: { type: string }
+                name: { type: string }
+                slug: { type: string }
+        farmer:
+          type: object
+          properties:
+            id: { type: string }
+            display_name: { type: string }
+            city: { type: string }
+            district: { type: string }
+            is_verified: { type: boolean }
+            is_founding_farmer: { type: boolean }
+            profile_image_url: { type: string, nullable: true }
+            public_phone: { type: string, nullable: true }
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      tags: [System]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string }
+                  database: { type: string }
+                  redis: { type: string }
+                  version: { type: string }
+
+  /auth/login:
+    post:
+      summary: Login
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, password]
+              properties:
+                phone: { type: string, example: "05000000000" }
+                password: { type: string }
+      responses:
+        '200':
+          description: JWT token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      access_token: { type: string }
+                      user: { type: object }
+
+  /otp/send:
+    post:
+      summary: Send OTP to phone
+      tags: [OTP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone]
+              properties:
+                phone: { type: string, example: "05XXXXXXXXX" }
+      responses:
+        '200': { description: OTP sent }
+        '429': { description: Rate limited }
+
+  /otp/verify:
+    post:
+      summary: Verify OTP code
+      tags: [OTP]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, code]
+              properties:
+                phone: { type: string }
+                code: { type: string, example: "123456" }
+      responses:
+        '200': { description: Verified }
+        '400': { description: Invalid code }
+
+  /categories:
+    get:
+      summary: Get category tree
+      tags: [Categories]
+      responses:
+        '200':
+          description: Category tree
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Category' }
+
+  /products:
+    get:
+      summary: List active products
+      tags: [Products]
+      parameters:
+        - { name: search, in: query, schema: { type: string } }
+        - { name: category_id, in: query, schema: { type: string, format: uuid } }
+        - { name: city, in: query, schema: { type: string } }
+        - { name: district, in: query, schema: { type: string } }
+        - { name: min_price, in: query, schema: { type: number } }
+        - { name: max_price, in: query, schema: { type: number } }
+        - { name: stock_status, in: query, schema: { type: string } }
+        - { name: sort, in: query, schema: { type: string, enum: [price_asc, price_desc] } }
+        - { name: page, in: query, schema: { type: integer, default: 1 } }
+        - { name: limit, in: query, schema: { type: integer, default: 20, maximum: 100 } }
+      responses:
+        '200':
+          description: Product list with pagination
+
+  /products/{id}:
+    get:
+      summary: Get product by ID
+      tags: [Products]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Product detail }
+        '404': { description: Not found }
+
+  /invites/validate:
+    get:
+      summary: Validate invite code
+      tags: [Invites]
+      parameters:
+        - { name: code, in: query, required: true, schema: { type: string, example: "KYS-FOUNDER" } }
+      responses:
+        '200': { description: Validation result }
+        '400': { description: Invalid code }
+        '404': { description: Code not found }
+
+  /farmer-applications:
+    post:
+      summary: Submit farmer application
+      tags: [Applications]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [invite_code, full_name, phone, password, business_name, producer_type, city, district, village, bio, product_categories, product_examples, kvkk_accepted, platform_terms_accepted, declares_own_production, declares_accurate_location, declares_not_intermediary]
+              properties:
+                invite_code: { type: string }
+                full_name: { type: string }
+                phone: { type: string }
+                email: { type: string }
+                password: { type: string, minLength: 6 }
+                business_name: { type: string }
+                producer_type: { type: string }
+                city: { type: string }
+                district: { type: string }
+                village: { type: string }
+                bio: { type: string }
+                product_categories: { type: array, items: { type: string } }
+                product_examples: { type: string }
+                production_place_type: { type: string }
+                kvkk_accepted: { type: boolean }
+                platform_terms_accepted: { type: boolean }
+                declares_own_production: { type: boolean }
+                declares_accurate_location: { type: boolean }
+                declares_not_intermediary: { type: boolean }
+      responses:
+        '201': { description: Application submitted }
+        '400': { description: Validation error }
+        '409': { description: Conflict }
+
+  /farmer/profile:
+    get:
+      summary: Get farmer profile
+      tags: [Farmer]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Profile }
+    put:
+      summary: Update farmer profile
+      tags: [Farmer]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Updated }
+
+  /farmer/products:
+    get:
+      summary: List own products
+      tags: [Farmer]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Product list }
+    post:
+      summary: Create product
+      tags: [Farmer]
+      security: [{ bearerAuth: [] }]
+      responses:
+        '201': { description: Created (pending review) }
+
+  /admin/applications:
+    get:
+      summary: List farmer applications
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [pending, needs_video, approved, rejected] } }
+        - { name: page, in: query, schema: { type: integer } }
+        - { name: limit, in: query, schema: { type: integer } }
+      responses:
+        '200': { description: Application list }
+
+  /admin/applications/{id}/approve:
+    post:
+      summary: Approve application
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                is_founding_farmer: { type: boolean }
+                invite_quota: { type: integer }
+      responses:
+        '200': { description: Approved, user created }
+
+  /admin/applications/{id}/reject:
+    post:
+      summary: Reject application
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rejection_reason]
+              properties:
+                rejection_reason: { type: string }
+                admin_note: { type: string }
+      responses:
+        '200': { description: Rejected }
+
+  /admin/products/{id}/approve:
+    post:
+      summary: Approve product
+      tags: [Admin]
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Approved }

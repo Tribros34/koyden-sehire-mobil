@@ -1,0 +1,27 @@
+# Environment — gerçek credentials burada, commit etme
+.env
+
+# Go binary
+api
+*.exe
+*.test
+
+# Build artifacts
+dist/
+bin/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
