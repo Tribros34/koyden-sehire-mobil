@@ -32,7 +32,7 @@ class ProductCard extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(AppRadius.sm),
                 child: AspectRatio(
-                  aspectRatio: 1,
+                  aspectRatio: compact ? 4 / 3 : 1,
                   child: product.firstImage == null
                       ? Container(
                           color: AppColors.background,

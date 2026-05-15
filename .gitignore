@@ -1,8 +1,8 @@
 # Environment — gerçek credentials burada, commit etme
 .env
 
-# Go binary
-api
+# Go binary (compiled output at repo root)
+/api
 *.exe
 *.test
 

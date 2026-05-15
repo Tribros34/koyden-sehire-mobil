@@ -26,6 +26,9 @@ class HomeScreen extends ConsumerWidget {
     final farmers = ref.watch(featuredFarmersProvider) as List;
     final auth = ref.watch(authProvider);
 
+    final isFarmer = auth.status == AuthStatus.farmerActive;
+    final isAdmin = auth.status == AuthStatus.admin;
+
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -35,7 +38,29 @@ class HomeScreen extends ConsumerWidget {
             Text(AppConstants.appName),
           ],
         ),
+        actions: [
+          if (isFarmer)
+            TextButton.icon(
+              onPressed: () => context.go('/farmer/dashboard'),
+              icon: const Icon(Icons.dashboard_outlined, size: 18),
+              label: const Text('Panelim'),
+            )
+          else if (isAdmin)
+            TextButton.icon(
+              onPressed: () => context.go('/admin'),
+              icon: const Icon(Icons.admin_panel_settings_outlined, size: 18),
+              label: const Text('Admin'),
+            )
+          else
+            TextButton.icon(
+              onPressed: () => context.push('/login'),
+              icon: const Icon(Icons.login_outlined, size: 18),
+              label: const Text('Giriş'),
+            ),
+          const SizedBox(width: 8),
+        ],
       ),
+      bottomNavigationBar: _PublicBottomNav(auth: auth),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(homeNewProductsProvider);
@@ -59,7 +84,7 @@ class HomeScreen extends ConsumerWidget {
               error: (e, _) => Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text('Kategoriler yüklenemedi',
-                    style: TextStyle(color: AppColors.textSecondary)),
+                    style: const TextStyle(color: AppColors.textSecondary)),
               ),
               data: (list) => _CategoryRow(categories: list),
             ),
@@ -71,13 +96,13 @@ class HomeScreen extends ConsumerWidget {
             const SizedBox(height: 8),
             products.when(
               loading: () => const SizedBox(
-                height: 220,
+                height: 240,
                 child: _HorizontalShimmer(),
               ),
               error: (e, _) => Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text('Ürünler yüklenemedi',
-                    style: TextStyle(color: AppColors.textSecondary)),
+                    style: const TextStyle(color: AppColors.textSecondary)),
               ),
               data: (items) {
                 if (items.isEmpty) {
@@ -85,12 +110,12 @@ class HomeScreen extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
                       'Henüz ürün bulunmuyor.',
-                      style: TextStyle(color: AppColors.textSecondary),
+                      style: const TextStyle(color: AppColors.textSecondary),
                     ),
                   );
                 }
                 return SizedBox(
-                  height: 230,
+                  height: 270,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -123,11 +148,69 @@ class HomeScreen extends ConsumerWidget {
             const SizedBox(height: 24),
             const _PlatformInfoCard(),
             const SizedBox(height: 16),
-            if (auth.status != AuthStatus.farmerActive) const _FarmerCtaCard(),
+            if (isFarmer)
+              _FarmerPanelCtaCard()
+            else
+              const _GuestCtaCard(),
             const SizedBox(height: 24),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _PublicBottomNav extends StatelessWidget {
+  final AuthState auth;
+  const _PublicBottomNav({required this.auth});
+
+  @override
+  Widget build(BuildContext context) {
+    final isFarmer = auth.status == AuthStatus.farmerActive;
+    return BottomNavigationBar(
+      type: BottomNavigationBarType.fixed,
+      currentIndex: 0,
+      onTap: (i) {
+        switch (i) {
+          case 0:
+            break; // already here
+          case 1:
+            context.push('/products');
+          case 2:
+            context.push('/apply');
+          case 3:
+            if (isFarmer) {
+              context.go('/farmer/dashboard');
+            } else {
+              context.push('/login');
+            }
+        }
+      },
+      items: [
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.home_outlined),
+          activeIcon: Icon(Icons.home),
+          label: 'Ana Sayfa',
+        ),
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.shopping_bag_outlined),
+          activeIcon: Icon(Icons.shopping_bag),
+          label: 'Ürünler',
+        ),
+        const BottomNavigationBarItem(
+          icon: Icon(Icons.agriculture_outlined),
+          label: 'Başvur',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(isFarmer
+              ? Icons.dashboard_outlined
+              : Icons.login_outlined),
+          activeIcon: Icon(isFarmer
+              ? Icons.dashboard
+              : Icons.login),
+          label: isFarmer ? 'Panelim' : 'Giriş Yap',
+        ),
+      ],
     );
   }
 }
@@ -150,8 +233,8 @@ class _HeroSearchBar extends StatelessWidget {
               border: Border.all(color: AppColors.border),
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
-            child: Row(
-              children: const [
+            child: const Row(
+              children: [
                 Icon(Icons.search, color: AppColors.textSecondary),
                 SizedBox(width: 8),
                 Text(
@@ -239,13 +322,13 @@ class _PlatformInfoCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.primaryLight.withOpacity(0.15),
+          color: AppColors.primaryLight.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: AppColors.primaryLight),
         ),
-        child: Row(
+        child: const Row(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
+          children: [
             Icon(Icons.info_outline, color: AppColors.primaryDark),
             SizedBox(width: 12),
             Expanded(
@@ -261,8 +344,8 @@ class _PlatformInfoCard extends StatelessWidget {
   }
 }
 
-class _FarmerCtaCard extends StatelessWidget {
-  const _FarmerCtaCard();
+class _GuestCtaCard extends StatelessWidget {
+  const _GuestCtaCard();
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -287,10 +370,53 @@ class _FarmerCtaCard extends StatelessWidget {
               style: TextStyle(color: AppColors.textSecondary),
             ),
             const SizedBox(height: 12),
-            AppButton(
-              label: 'Başvur',
-              onPressed: () => context.push('/apply'),
-              fullWidth: false,
+            Row(
+              children: [
+                AppButton(
+                  label: 'Başvur',
+                  onPressed: () => context.push('/apply'),
+                  fullWidth: false,
+                ),
+                const SizedBox(width: 12),
+                OutlinedButton.icon(
+                  onPressed: () => context.push('/login'),
+                  icon: const Icon(Icons.login_outlined, size: 18),
+                  label: const Text('Üretici Girişi'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FarmerPanelCtaCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.primaryLight.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: AppColors.primary),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.dashboard_outlined, color: AppColors.primary),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Çiftçi panelinize gitmek için tıklayın.',
+                style: TextStyle(color: AppColors.primaryDark),
+              ),
+            ),
+            TextButton(
+              onPressed: () => context.go('/farmer/dashboard'),
+              child: const Text('Panelim'),
             ),
           ],
         ),

@@ -128,6 +128,10 @@ class AuthController extends StateNotifier<AuthState> {
         isSubmitting: false,
         errorMessage: 'Bir hata oluştu, tekrar deneyin',
       );
+    } finally {
+      if (state.isSubmitting) {
+        state = state.copyWith(isSubmitting: false);
+      }
     }
   }
 

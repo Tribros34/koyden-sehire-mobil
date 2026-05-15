@@ -46,7 +46,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (next.errorMessage != null && next.errorMessage != prev?.errorMessage) {
         context.snack(next.errorMessage!, isError: true);
       }
-      // Routing is handled by GoRouter redirect callback.
+      if (next.status == AuthStatus.farmerActive &&
+          prev?.status != AuthStatus.farmerActive) {
+        context.go('/farmer/dashboard');
+      }
+      if (next.status == AuthStatus.admin &&
+          prev?.status != AuthStatus.admin) {
+        context.go('/admin');
+      }
     });
 
     final auth = ref.watch(authProvider);
