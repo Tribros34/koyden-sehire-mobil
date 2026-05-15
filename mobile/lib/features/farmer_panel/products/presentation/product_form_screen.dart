@@ -40,8 +40,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   Future<bool> _confirmDiscard() async {
     final state = ref.read(productFormProvider);
     final isDirty = state.data.title.isNotEmpty ||
-        state.data.imageUrls.isNotEmpty ||
-        state.data.newImages.isNotEmpty;
+        state.data.imageUrls.isNotEmpty;
     if (!isDirty) return true;
     final result = await showDialog<bool>(
       context: context,

@@ -23,7 +23,7 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final categories = ref.watch(categoryTreeProvider);
     final products = ref.watch(homeNewProductsProvider);
-    final farmers = ref.watch(featuredFarmersProvider) as List;
+    final farmers = ref.watch(featuredFarmersProvider);
     final auth = ref.watch(authProvider);
 
     final isFarmer = auth.status == AuthStatus.farmerActive;
@@ -31,10 +31,10 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
+        title: const Row(
           children: [
-            const Icon(Icons.eco_outlined, color: AppColors.primary),
-            const SizedBox(width: 8),
+            Icon(Icons.eco_outlined, color: AppColors.primary),
+            SizedBox(width: 8),
             Text(AppConstants.appName),
           ],
         ),
@@ -66,99 +66,134 @@ class HomeScreen extends ConsumerWidget {
           ref.invalidate(homeNewProductsProvider);
           ref.invalidate(categoryTreeProvider);
         },
-        child: ListView(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          children: [
-            const _HeroSearchBar(),
-            const SizedBox(height: 24),
-            _SectionHeader(
-              title: 'Kategoriler',
-              onSeeAll: () => context.push('/products'),
+        child: CustomScrollView(
+          // Clamp instead of bounce — prevents iOS overscroll from locking scroll
+          physics: const ClampingScrollPhysics(),
+          slivers: [
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+            // Search bar
+            const SliverToBoxAdapter(child: _HeroSearchBar()),
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+            // Categories
+            SliverToBoxAdapter(
+              child: _SectionHeader(
+                title: 'Kategoriler',
+                onSeeAll: () => context.push('/products'),
+              ),
             ),
-            const SizedBox(height: 8),
-            categories.when(
-              loading: () => const SizedBox(
-                height: 48,
-                child: Center(child: CircularProgressIndicator()),
+            const SliverToBoxAdapter(child: SizedBox(height: 8)),
+            SliverToBoxAdapter(
+              child: categories.when(
+                loading: () => const SizedBox(
+                  height: 48,
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (_, __) => const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    'Kategoriler yüklenemedi',
+                    style: TextStyle(color: AppColors.textSecondary),
+                  ),
+                ),
+                data: (list) => _CategoryRow(categories: list),
               ),
-              error: (e, _) => Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text('Kategoriler yüklenemedi',
-                    style: const TextStyle(color: AppColors.textSecondary)),
-              ),
-              data: (list) => _CategoryRow(categories: list),
             ),
-            const SizedBox(height: 24),
-            _SectionHeader(
-              title: 'Yeni Eklenenler',
-              onSeeAll: () => context.push('/products'),
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+            // New products
+            SliverToBoxAdapter(
+              child: _SectionHeader(
+                title: 'Yeni Eklenenler',
+                onSeeAll: () => context.push('/products'),
+              ),
             ),
-            const SizedBox(height: 8),
-            products.when(
-              loading: () => const SizedBox(
-                height: 240,
-                child: _HorizontalShimmer(),
+            const SliverToBoxAdapter(child: SizedBox(height: 8)),
+            SliverToBoxAdapter(
+              child: products.when(
+                loading: () => const SizedBox(
+                  height: 240,
+                  child: _HorizontalShimmer(),
+                ),
+                error: (_, __) => const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    'Ürünler yüklenemedi',
+                    style: TextStyle(color: AppColors.textSecondary),
+                  ),
+                ),
+                data: (items) => items.isEmpty
+                    ? const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'Henüz ürün bulunmuyor.',
+                          style: TextStyle(color: AppColors.textSecondary),
+                        ),
+                      )
+                    : SizedBox(
+                        height: 270,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          // Clamping prevents horizontal overscroll from eating
+                          // the parent's vertical gesture recognizer
+                          physics: const ClampingScrollPhysics(),
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: items.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(width: 12),
+                          itemBuilder: (_, i) => SizedBox(
+                            width: 160,
+                            child:
+                                ProductCard(product: items[i], compact: true),
+                          ),
+                        ),
+                      ),
               ),
-              error: (e, _) => Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text('Ürünler yüklenemedi',
-                    style: const TextStyle(color: AppColors.textSecondary)),
+            ),
+
+            // Featured farmers
+            if (farmers.isNotEmpty) ...[
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              const SliverToBoxAdapter(
+                child: _SectionHeader(title: 'Öne Çıkan Üreticiler'),
               ),
-              data: (items) {
-                if (items.isEmpty) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      'Henüz ürün bulunmuyor.',
-                      style: const TextStyle(color: AppColors.textSecondary),
-                    ),
-                  );
-                }
-                return SizedBox(
-                  height: 270,
+              const SliverToBoxAdapter(child: SizedBox(height: 8)),
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height: 180,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
+                    physics: const ClampingScrollPhysics(),
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: items.length,
+                    itemCount: farmers.length,
                     separatorBuilder: (_, __) => const SizedBox(width: 12),
-                    itemBuilder: (_, i) => SizedBox(
-                      width: 160,
-                      child: ProductCard(product: items[i], compact: true),
-                    ),
+                    itemBuilder: (_, i) =>
+                        FarmerCard(farmer: farmers[i] as FarmerSummary),
                   ),
-                );
-              },
-            ),
-            if (farmers.isNotEmpty) ...[
-              const SizedBox(height: 24),
-              const _SectionHeader(title: 'Öne Çıkan Üreticiler'),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 180,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: farmers.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 12),
-                  itemBuilder: (_, i) =>
-                      FarmerCard(farmer: farmers[i] as FarmerSummary),
                 ),
               ),
             ],
-            const SizedBox(height: 24),
-            const _PlatformInfoCard(),
-            const SizedBox(height: 16),
-            if (isFarmer)
-              _FarmerPanelCtaCard()
-            else
-              const _GuestCtaCard(),
-            const SizedBox(height: 24),
+
+            // Platform info + CTA
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            const SliverToBoxAdapter(child: _PlatformInfoCard()),
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            SliverToBoxAdapter(
+              child: isFarmer
+                  ? const _FarmerPanelCtaCard()
+                  : const _GuestCtaCard(),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
           ],
         ),
       ),
     );
   }
 }
+
+// ---------------------------------------------------------------------------
 
 class _PublicBottomNav extends StatelessWidget {
   final AuthState auth;
@@ -173,7 +208,7 @@ class _PublicBottomNav extends StatelessWidget {
       onTap: (i) {
         switch (i) {
           case 0:
-            break; // already here
+            break;
           case 1:
             context.push('/products');
           case 2:
@@ -202,18 +237,18 @@ class _PublicBottomNav extends StatelessWidget {
           label: 'Başvur',
         ),
         BottomNavigationBarItem(
-          icon: Icon(isFarmer
-              ? Icons.dashboard_outlined
-              : Icons.login_outlined),
-          activeIcon: Icon(isFarmer
-              ? Icons.dashboard
-              : Icons.login),
+          icon:
+              Icon(isFarmer ? Icons.dashboard_outlined : Icons.login_outlined),
+          activeIcon:
+              Icon(isFarmer ? Icons.dashboard : Icons.login),
           label: isFarmer ? 'Panelim' : 'Giriş Yap',
         ),
       ],
     );
   }
 }
+
+// ---------------------------------------------------------------------------
 
 class _HeroSearchBar extends StatelessWidget {
   const _HeroSearchBar();
@@ -228,7 +263,8 @@ class _HeroSearchBar extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.md),
           onTap: () => context.push('/search'),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               border: Border.all(color: AppColors.border),
               borderRadius: BorderRadius.circular(AppRadius.md),
@@ -261,10 +297,12 @@ class _SectionHeader extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(title, style: Theme.of(context).textTheme.titleLarge),
+            child: Text(
+                title, style: Theme.of(context).textTheme.titleLarge),
           ),
           if (onSeeAll != null)
-            TextButton(onPressed: onSeeAll, child: const Text('Tümünü Gör')),
+            TextButton(
+                onPressed: onSeeAll, child: const Text('Tümünü Gör')),
         ],
       ),
     );
@@ -281,6 +319,7 @@ class _CategoryRow extends StatelessWidget {
       height: 48,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
+        physics: const ClampingScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: roots.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
@@ -302,6 +341,7 @@ class _HorizontalShimmer extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView.separated(
       scrollDirection: Axis.horizontal,
+      physics: const ClampingScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: 4,
       separatorBuilder: (_, __) => const SizedBox(width: 12),
@@ -334,7 +374,8 @@ class _PlatformInfoCard extends StatelessWidget {
             Expanded(
               child: Text(
                 AppConstants.platformInfoText,
-                style: TextStyle(color: AppColors.primaryDark, height: 1.4),
+                style:
+                    TextStyle(color: AppColors.primaryDark, height: 1.4),
               ),
             ),
           ],
@@ -393,6 +434,7 @@ class _GuestCtaCard extends StatelessWidget {
 }
 
 class _FarmerPanelCtaCard extends StatelessWidget {
+  const _FarmerPanelCtaCard();
   @override
   Widget build(BuildContext context) {
     return Padding(
