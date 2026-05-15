@@ -37,6 +37,45 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   bool _loadingExisting = false;
   String? _loadError;
 
+  Future<bool> _confirmDiscard() async {
+    final state = ref.read(productFormProvider);
+    final isDirty = state.data.title.isNotEmpty ||
+        state.data.imageUrls.isNotEmpty ||
+        state.data.newImages.isNotEmpty;
+    if (!isDirty) return true;
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Değişiklikler kaybolacak'),
+        content: const Text(
+            'Çıkmak istediğinize emin misiniz? Girdiğiniz bilgiler kaybolabilir.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('İptal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Çık'),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
+  void _handleBack() async {
+    if (await _confirmDiscard()) {
+      if (mounted) {
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go('/farmer/products');
+        }
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -169,7 +208,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           ? 'Ürününüz incelemeye alındı.'
           : 'Ürün güncellendi.');
       ref.invalidate(myProductsProvider);
-      context.go('/farmer/products');
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/farmer/products');
+      }
     } else {
       final err = ref.read(productFormProvider).errorMessage;
       if (err != null) context.snack(err, isError: true);
@@ -183,13 +226,19 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
     if (_loadingExisting) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Ürün Düzenle')),
+        appBar: AppBar(
+          title: const Text('Ürün Düzenle'),
+          leading: BackButton(onPressed: _handleBack),
+        ),
         body: const AppLoading(),
       );
     }
     if (_loadError != null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Ürün Düzenle')),
+        appBar: AppBar(
+          title: const Text('Ürün Düzenle'),
+          leading: BackButton(onPressed: _handleBack),
+        ),
         body: AppErrorWidget(
           message: _loadError!,
           onRetry: () {
@@ -206,6 +255,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.editingId == null ? 'Yeni Ürün' : 'Ürünü Düzenle'),
+        leading: BackButton(onPressed: _handleBack),
       ),
       body: SafeArea(
         child: SingleChildScrollView(

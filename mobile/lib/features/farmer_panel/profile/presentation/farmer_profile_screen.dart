@@ -13,6 +13,7 @@ import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_widget.dart';
 import '../../../../shared/widgets/app_loading.dart';
 import '../../../../shared/widgets/app_text_field.dart';
+import '../../../../shared/widgets/farmer_bottom_nav.dart';
 import '../../../public/farmers/models/farmer_model.dart';
 import '../providers/farmer_profile_provider.dart';
 
@@ -60,7 +61,11 @@ class _FarmerProfileEditScreenState
     final state = ref.watch(farmerProfileProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profil')),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: const Text('Profil'),
+      ),
+      bottomNavigationBar: const FarmerBottomNav(currentIndex: 3),
       body: Builder(
         builder: (_) {
           if (state.isLoading && state.profile == null) {

@@ -8,6 +8,7 @@ import '../../../../core/utils/date_formatter.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_widget.dart';
 import '../../../../shared/widgets/app_loading.dart';
+import '../../../../shared/widgets/farmer_bottom_nav.dart';
 import '../../../auth/providers/auth_provider.dart';
 import '../../profile/providers/farmer_profile_provider.dart';
 import '../../products/models/farmer_product_model.dart';
@@ -26,7 +27,9 @@ class FarmerDashboardScreen extends ConsumerWidget {
         'Üretici';
 
     return Scaffold(
+      bottomNavigationBar: const FarmerBottomNav(currentIndex: 0),
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text('Merhaba, $displayName'),
         actions: [
           IconButton(

@@ -10,6 +10,7 @@ import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_empty_widget.dart';
 import '../../../../shared/widgets/app_error_widget.dart';
 import '../../../../shared/widgets/app_loading.dart';
+import '../../../../shared/widgets/farmer_bottom_nav.dart';
 import '../models/invitation_model.dart';
 import '../providers/invitation_provider.dart';
 
@@ -21,6 +22,7 @@ class InvitationsScreen extends ConsumerWidget {
     final async = ref.watch(invitationListProvider);
     return Scaffold(
       appBar: AppBar(title: const Text('Davetlerim')),
+      bottomNavigationBar: const FarmerBottomNav(currentIndex: 2),
       body: RefreshIndicator(
         onRefresh: () async => ref.invalidate(invitationListProvider),
         child: async.when(

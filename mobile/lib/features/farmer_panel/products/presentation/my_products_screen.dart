@@ -9,6 +9,7 @@ import '../../../../shared/extensions/context_extensions.dart';
 import '../../../../shared/widgets/app_empty_widget.dart';
 import '../../../../shared/widgets/app_error_widget.dart';
 import '../../../../shared/widgets/app_loading.dart';
+import '../../../../shared/widgets/farmer_bottom_nav.dart';
 import '../models/farmer_product_model.dart';
 import '../providers/my_products_provider.dart';
 
@@ -54,7 +55,9 @@ class _MyProductsScreenState extends ConsumerState<MyProductsScreen>
     final state = ref.watch(myProductsProvider);
 
     return Scaffold(
+      bottomNavigationBar: const FarmerBottomNav(currentIndex: 1),
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text('Ürünlerim'),
         bottom: TabBar(
           controller: _tab,

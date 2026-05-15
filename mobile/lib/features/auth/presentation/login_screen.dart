@@ -115,7 +115,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 24),
                 Center(
                   child: TextButton(
-                    onPressed: () => context.go('/apply'),
+                    onPressed: () => context.push('/apply'),
                     child: const Text('Üretici değil misiniz? Başvurun'),
                   ),
                 ),
