@@ -1,0 +1,20 @@
+<!-- Add these keys to ios/Runner/Info.plist -->
+<key>NSCameraUsageDescription</key>
+<string>Ürün fotoğrafı veya doğrulama videosu çekmek için kamera erişimi gerekli</string>
+<key>NSPhotoLibraryUsageDescription</key>
+<string>Ürün fotoğrafı seçmek için galeri erişimi gerekli</string>
+<key>NSMicrophoneUsageDescription</key>
+<string>Video kaydı için mikrofon erişimi gerekli</string>
+
+<!-- Deep link support -->
+<key>FlutterDeepLinkingEnabled</key>
+<true/>
+<key>CFBundleURLTypes</key>
+<array>
+  <dict>
+    <key>CFBundleURLSchemes</key>
+    <array>
+      <string>https</string>
+    </array>
+  </dict>
+</array>
