@@ -19,25 +19,30 @@ const columns: ColumnDef<Product>[] = [
   {
     accessorKey: "title",
     header: "Ürün",
-    cell: ({ row }) => (
-      <div className="flex items-center gap-3">
-        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-md bg-stone-100">
-          <img src={row.original.image_urls[0]} alt={row.original.title} className="h-full w-full object-cover" />
+    cell: ({ row }) => {
+      const imageUrl = row.original.images?.[0]?.url;
+      return (
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-md bg-stone-100">
+            {imageUrl ? (
+              <img src={imageUrl} alt={row.original.title} className="h-full w-full object-cover" />
+            ) : (
+              <div className="h-full w-full bg-stone-200" />
+            )}
+          </div>
+          <div>
+            <p className="font-medium text-stone-900 dark:text-white">{row.original.title}</p>
+            <p className="text-xs text-stone-500">{row.original.category?.name ?? "—"}</p>
+          </div>
         </div>
-        <div>
-          <p className="font-medium text-stone-900 dark:text-white">{row.original.title}</p>
-          <p className="text-xs text-stone-500">{row.original.category_name}</p>
-        </div>
-      </div>
-    ),
+      );
+    },
   },
   {
-    accessorKey: "farmer_name",
+    id: "farmer_name",
     header: "Üretici",
     cell: ({ row }) => (
-      <span className="text-sm">
-        {row.original.farmer_name}
-      </span>
+      <span className="text-sm">{row.original.farmer?.display_name ?? "—"}</span>
     ),
   },
   {
@@ -45,27 +50,15 @@ const columns: ColumnDef<Product>[] = [
     header: "Fiyat",
     cell: ({ row }) => (
       <span className="text-sm font-medium">
-        {row.original.price} ₺ <span className="text-xs font-normal text-stone-500">/ {row.original.unit}</span>
+        {row.original.price} ₺{" "}
+        <span className="text-xs font-normal text-stone-500">/ {row.original.unit}</span>
       </span>
     ),
   },
   {
     accessorKey: "status",
     header: "Durum",
-    cell: ({ row }) => <StatusBadge status={row.original.status as any} />,
-  },
-  {
-    accessorKey: "moderation_tags",
-    header: "Akıllı Etiketler",
-    cell: ({ row }) => (
-      <div className="flex flex-wrap gap-1 max-w-[200px]">
-        {row.original.moderation_tags?.map((tag) => (
-          <span key={tag} className="inline-flex items-center rounded-md bg-stone-100 px-2 py-0.5 text-[10px] font-medium text-stone-600 dark:bg-stone-800 dark:text-stone-300">
-            {tag}
-          </span>
-        ))}
-      </div>
-    ),
+    cell: ({ row }) => <StatusBadge status={row.original.status} />,
   },
   {
     id: "actions",
@@ -92,8 +85,8 @@ export default function ProductsPage() {
     data?.filter(
       (product) =>
         product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.farmer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.category_name.toLowerCase().includes(searchTerm.toLowerCase())
+        (product.farmer?.display_name ?? "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (product.category?.name ?? "").toLowerCase().includes(searchTerm.toLowerCase())
     ) || [];
 
   return (

@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/admin/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { adminApi } from "@/lib/api";
+import { CityDensity } from "@/lib/types";
 
 export default function MapPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -61,7 +62,7 @@ export default function MapPage() {
   );
 }
 
-function CityCard({ data }: { data: any }) {
+function CityCard({ data }: { data: CityDensity }) {
   let borderClass = "border-stone-200 dark:border-stone-800";
   let bgClass = "";
   

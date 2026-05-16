@@ -37,7 +37,9 @@ export default function LoginPage() {
       setToken(res.token);
       router.push("/admin/dashboard");
     } catch (error) {
-      setError("root", { message: error instanceof Error ? error.message : "Giriş başarısız" });
+      setError("root", {
+        message: error instanceof Error ? error.message : "Giriş başarısız",
+      });
     }
   };
 

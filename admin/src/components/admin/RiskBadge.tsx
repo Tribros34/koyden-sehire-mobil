@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { ShieldAlert, ShieldCheck, Shield } from "lucide-react";
 
-type RiskLevel = "low" | "medium" | "high";
+type RiskLevel = "low" | "medium" | "high" | string;
 
 export function RiskBadge({ level, className }: { level: RiskLevel; className?: string }) {
   let colorClass = "";

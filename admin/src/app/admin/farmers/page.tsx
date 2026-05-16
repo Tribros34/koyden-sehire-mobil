@@ -22,7 +22,7 @@ const columns: ColumnDef<Farmer>[] = [
         <p className="font-medium text-stone-900 dark:text-white flex items-center gap-1.5">
           {row.original.full_name}
           {row.original.is_founding_farmer && (
-            <ShieldCheck className="h-4 w-4 text-emerald-600" title="Kurucu Çiftçi" />
+            <span title="Kurucu Çiftçi"><ShieldCheck className="h-4 w-4 text-emerald-600" /></span>
           )}
         </p>
         <p className="text-xs text-stone-500">{row.original.phone}</p>
@@ -41,7 +41,7 @@ const columns: ColumnDef<Farmer>[] = [
   {
     accessorKey: "status",
     header: "Durum",
-    cell: ({ row }) => <StatusBadge status={row.original.status as any} />,
+    cell: ({ row }) => <StatusBadge status={row.original.status} />,
   },
   {
     accessorKey: "trust_score",
@@ -87,10 +87,10 @@ export default function FarmersPage() {
 
   const filteredData =
     data?.filter(
-      (farmer) =>
+      (farmer: Farmer) =>
         farmer.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         farmer.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        farmer.invite_code.toLowerCase().includes(searchTerm.toLowerCase())
+        (farmer.invite_code ?? "").toLowerCase().includes(searchTerm.toLowerCase())
     ) || [];
 
   return (

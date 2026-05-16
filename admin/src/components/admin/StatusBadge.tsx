@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { CheckCircle2, AlertCircle, Clock, EyeOff } from "lucide-react";
 
-type StatusType = "pending" | "approved" | "rejected" | "hidden" | "active" | "suspended";
+type StatusType = "pending" | "approved" | "rejected" | "hidden" | "active" | "suspended" | "passive" | "needs_video" | string;
 
 export function StatusBadge({ status, className }: { status: StatusType; className?: string }) {
   let colorClass = "";

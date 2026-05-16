@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConfirmModal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
 import { adminApi } from "@/lib/api";
+import { Farmer } from "@/lib/types";
 
 export default function FarmerDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -25,7 +26,7 @@ export default function FarmerDetailPage({ params }: { params: Promise<{ id: str
   });
 
   const updateMutation = useMutation({
-    mutationFn: (payload: any) => adminApi.updateFarmer(resolvedParams.id, payload),
+    mutationFn: (payload: Partial<Farmer>) => adminApi.updateFarmer(resolvedParams.id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["farmer", resolvedParams.id] });
       queryClient.invalidateQueries({ queryKey: ["farmers"] });
@@ -77,7 +78,7 @@ export default function FarmerDetailPage({ params }: { params: Promise<{ id: str
                   <p className="text-sm font-medium text-stone-500">Ad Soyad</p>
                   <p className="font-semibold flex items-center gap-2">
                     {farmer.full_name}
-                    {farmer.is_founding_farmer && <ShieldCheck className="h-4 w-4 text-emerald-600" title="Kurucu Çiftçi" />}
+                    {farmer.is_founding_farmer && <span title="Kurucu Çiftçi"><ShieldCheck className="h-4 w-4 text-emerald-600" /></span>}
                   </p>
                 </div>
                 <div>
@@ -90,7 +91,7 @@ export default function FarmerDetailPage({ params }: { params: Promise<{ id: str
                 </div>
                 <div>
                   <p className="text-sm font-medium text-stone-500">Durum</p>
-                  <div className="mt-1"><StatusBadge status={farmer.status as any} /></div>
+                  <div className="mt-1"><StatusBadge status={farmer.status} /></div>
                 </div>
               </div>
 
@@ -127,7 +128,7 @@ export default function FarmerDetailPage({ params }: { params: Promise<{ id: str
                   <p className="text-sm text-stone-500">Kurucu çiftçiler sınırsız davet edebilir ve ağın kökü olurlar.</p>
                 </div>
                 <Button 
-                  variant={farmer.is_founding_farmer ? "outline" : "default"}
+                  variant={farmer.is_founding_farmer ? "outline" : "primary"}
                   onClick={() => updateMutation.mutate({ is_founding_farmer: !farmer.is_founding_farmer })}
                   disabled={updateMutation.isPending}
                 >

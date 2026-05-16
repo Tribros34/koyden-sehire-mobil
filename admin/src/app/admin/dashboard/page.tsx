@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
@@ -237,7 +238,7 @@ function MetricCard({
 }: {
   title: string;
   value: string | number;
-  icon: any;
+  icon: React.ComponentType<{ className?: string }>;
   trend?: string | null;
   className?: string;
 }) {

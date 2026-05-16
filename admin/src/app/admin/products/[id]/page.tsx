@@ -33,7 +33,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   });
 
   const reviewMutation = useMutation({
-    mutationFn: (args: { action: "active" | "rejected" | "hidden"; reason?: string }) =>
+    mutationFn: (args: { action: "approve" | "reject"; reason?: string }) =>
       adminApi.moderateProduct(resolvedParams.id, args.action, args.reason),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["product", resolvedParams.id] });
@@ -60,7 +60,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             Ürünlere Dön
           </Link>
         </Button>
-        <PageHeader title="Ürün Moderasyonu" description={`Üretici: ${product.farmer_name}`}>
+        <PageHeader title="Ürün Moderasyonu" description={`Üretici: ${product.farmer?.display_name ?? "—"}`}>
           {product.status === "pending" && (
             <>
               <Button variant="danger" onClick={() => setRejectModalOpen(true)} disabled={reviewMutation.isPending}>
@@ -68,7 +68,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                 Reddet
               </Button>
               <Button
-                onClick={() => reviewMutation.mutate({ action: "active" })}
+                onClick={() => reviewMutation.mutate({ action: "approve" })}
                 disabled={reviewMutation.isPending || !isChecklistComplete}
                 title={!isChecklistComplete ? "Önce kalite kontrol listesini tamamlayın" : ""}
               >
@@ -78,7 +78,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             </>
           )}
           {product.status === "active" && (
-            <Button variant="outline" onClick={() => reviewMutation.mutate({ action: "hidden" })} disabled={reviewMutation.isPending}>
+            <Button variant="outline" disabled title="Bu özellik için backend endpointi henüz hazır değil.">
               <AlertTriangle className="mr-2 h-4 w-4" />
               Askıya Al / Gizle
             </Button>
@@ -96,29 +96,31 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             <CardContent className="space-y-6">
               <div className="flex flex-col gap-6 sm:flex-row">
                 <div className="h-48 w-48 flex-shrink-0 overflow-hidden rounded-lg bg-stone-100">
-                  <img src={product.image_urls[0]} alt={product.title} className="h-full w-full object-cover" />
+                  {product.images?.[0]?.url ? (
+                    <img src={product.images[0].url} alt={product.title} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="h-full w-full bg-stone-200" />
+                  )}
                 </div>
                 <div className="flex-1 space-y-4">
                   <div>
                     <h2 className="text-xl font-bold">{product.title}</h2>
-                    <p className="text-sm text-stone-500">{product.category_name}</p>
+                    <p className="text-sm text-stone-500">{product.category?.name ?? "—"}</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <StatusBadge status={product.status as any} />
-                    {product.moderation_tags?.map((tag) => (
-                      <span key={tag} className="inline-flex items-center rounded-md bg-stone-100 px-2 py-0.5 text-xs font-medium text-stone-600 dark:bg-stone-800 dark:text-stone-300">
-                        {tag}
-                      </span>
-                    ))}
+                    <StatusBadge status={product.status} />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm font-medium text-stone-500">Fiyat</p>
-                      <p className="font-semibold text-lg">{product.price} ₺ <span className="text-sm font-normal text-stone-500">/ {product.unit}</span></p>
+                      <p className="font-semibold text-lg">
+                        {product.price} ₺{" "}
+                        <span className="text-sm font-normal text-stone-500">/ {product.unit}</span>
+                      </p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-stone-500">Stok</p>
-                      <p className="font-semibold">{product.stock} adet</p>
+                      <p className="text-sm font-medium text-stone-500">Lokasyon</p>
+                      <p className="font-semibold text-sm">{product.city}{product.district ? `, ${product.district}` : ""}</p>
                     </div>
                   </div>
                 </div>
@@ -173,16 +175,23 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               <CardTitle className="text-lg">Üretici Özeti</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-               <div>
-                  <p className="text-sm font-medium text-stone-500">İsim</p>
-                  <Link href={`/admin/farmers/${product.farmer_id}`} className="font-semibold text-emerald-700 hover:underline dark:text-emerald-500">
-                    {product.farmer_name}
+              <div>
+                <p className="text-sm font-medium text-stone-500">İsim</p>
+                {product.farmer?.id ? (
+                  <Link href={`/admin/farmers/${product.farmer.id}`} className="font-semibold text-emerald-700 hover:underline dark:text-emerald-500">
+                    {product.farmer.display_name}
                   </Link>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-stone-500">Lokasyon</p>
-                  <p className="text-sm">{product.city}</p>
-                </div>
+                ) : (
+                  <p className="font-semibold">—</p>
+                )}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-stone-500">Lokasyon</p>
+                <p className="text-sm">
+                  {product.farmer?.city ?? product.city}
+                  {(product.farmer?.district ?? product.district) ? `, ${product.farmer?.district ?? product.district}` : ""}
+                </p>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -197,7 +206,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         danger
         onConfirm={() => {
           if (!rejectReason) return;
-          reviewMutation.mutate({ action: "rejected", reason: rejectReason });
+          reviewMutation.mutate({ action: "reject", reason: rejectReason });
         }}
       >
         <Input

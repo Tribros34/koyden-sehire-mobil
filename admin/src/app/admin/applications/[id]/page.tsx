@@ -27,7 +27,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
   });
 
   const reviewMutation = useMutation({
-    mutationFn: (args: { action: "approve" | "reject" | "request_video"; reason?: string }) =>
+    mutationFn: (args: { action: "approve" | "reject"; reason?: string }) =>
       adminApi.reviewApplication(resolvedParams.id, args.action, args.reason),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["application", resolvedParams.id] });
@@ -55,7 +55,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
         <PageHeader title="Başvuru İncelemesi" description={`${app.full_name} isimli üreticinin başvurusu.`}>
           {app.status === "pending" && (
             <>
-              <Button variant="outline" onClick={() => reviewMutation.mutate({ action: "request_video" })} disabled={reviewMutation.isPending}>
+              <Button variant="outline" disabled title="Bu özellik için backend endpointi henüz hazır değil.">
                 <Video className="mr-2 h-4 w-4" />
                 Video İste
               </Button>
@@ -95,11 +95,11 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                 </div>
                 <div>
                   <p className="text-sm font-medium text-stone-500">Lokasyon</p>
-                  <p>{app.city}, {app.district} - {app.village}</p>
+                  <p>{app.city}, {app.district}{app.village ? ` - ${app.village}` : ""}</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-stone-500">Durum</p>
-                  <div className="mt-1"><StatusBadge status={app.status as any} /></div>
+                  <div className="mt-1"><StatusBadge status={app.status} /></div>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-stone-500">Başvuru Tarihi</p>
@@ -107,15 +107,19 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
                 </div>
               </div>
 
-              <div>
-                <p className="text-sm font-medium text-stone-500">Hakkında</p>
-                <p className="mt-1 text-sm">{app.profile_description}</p>
-              </div>
-              
-              <div>
-                <p className="text-sm font-medium text-stone-500">Ürün Örnekleri</p>
-                <p className="mt-1 text-sm">{app.product_examples}</p>
-              </div>
+              {app.profile_description && (
+                <div>
+                  <p className="text-sm font-medium text-stone-500">Hakkında</p>
+                  <p className="mt-1 text-sm">{app.profile_description}</p>
+                </div>
+              )}
+
+              {app.product_examples && (
+                <div>
+                  <p className="text-sm font-medium text-stone-500">Ürün Örnekleri</p>
+                  <p className="mt-1 text-sm">{app.product_examples}</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -146,30 +150,36 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
               <CardTitle className="text-lg">Risk Analizi</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Genel Risk</span>
-                <RiskBadge level={app.risk_level as any} />
-              </div>
-              
-              <div className="space-y-2 border-t pt-4 dark:border-stone-800">
-                <div className="flex items-start justify-between gap-4">
-                  <span className="text-sm">Davet Kodu</span>
-                  <span className={`text-sm font-medium ${app.invite_trust === 'trusted' ? 'text-emerald-600' : 'text-amber-600'}`}>
-                    {app.invite_code} ({app.invite_trust})
-                  </span>
+              {app.risk_level && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Genel Risk</span>
+                  <RiskBadge level={app.risk_level ?? "low"} />
                 </div>
+              )}
+
+              <div className="space-y-2 border-t pt-4 dark:border-stone-800">
+                {app.invite_code && (
+                  <div className="flex items-start justify-between gap-4">
+                    <span className="text-sm">Davet Kodu</span>
+                    <span className={`text-sm font-medium ${app.invite_trust === "trusted" ? "text-emerald-600" : "text-amber-600"}`}>
+                      {app.invite_code}{app.invite_trust ? ` (${app.invite_trust})` : ""}
+                    </span>
+                  </div>
+                )}
                 <div className="flex items-start justify-between gap-4">
                   <span className="text-sm">Video Durumu</span>
-                  <span className={`text-sm font-medium ${app.video_url ? 'text-emerald-600' : 'text-red-600'}`}>
+                  <span className={`text-sm font-medium ${app.video_url ? "text-emerald-600" : "text-red-600"}`}>
                     {app.video_url ? "Yüklendi" : "Eksik"}
                   </span>
                 </div>
-                <div className="flex items-start justify-between gap-4">
-                  <span className="text-sm">Profil Doluluğu</span>
-                  <span className={`text-sm font-medium ${app.profile_description.length > 20 ? 'text-emerald-600' : 'text-red-600'}`}>
-                    {app.profile_description.length > 20 ? "Yeterli" : "Kısa"}
-                  </span>
-                </div>
+                {app.profile_description && (
+                  <div className="flex items-start justify-between gap-4">
+                    <span className="text-sm">Profil Doluluğu</span>
+                    <span className={`text-sm font-medium ${app.profile_description.length > 20 ? "text-emerald-600" : "text-red-600"}`}>
+                      {app.profile_description.length > 20 ? "Yeterli" : "Kısa"}
+                    </span>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -180,7 +190,7 @@ export default function ApplicationDetailPage({ params }: { params: Promise<{ id
             </CardHeader>
             <CardContent>
               <p className="text-sm text-stone-600 dark:text-stone-400">
-                {app.admin_notes || "Henüz not eklenmemiş."}
+                {app.admin_notes ?? "Henüz not eklenmemiş."}
               </p>
             </CardContent>
           </Card>

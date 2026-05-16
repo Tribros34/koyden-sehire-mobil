@@ -39,12 +39,12 @@ const columns: ColumnDef<Application>[] = [
   {
     accessorKey: "status",
     header: "Durum",
-    cell: ({ row }) => <StatusBadge status={row.original.status as any} />,
+    cell: ({ row }) => <StatusBadge status={row.original.status} />,
   },
   {
     accessorKey: "risk_level",
     header: "Risk Analizi",
-    cell: ({ row }) => <RiskBadge level={row.original.risk_level as any} />,
+    cell: ({ row }) => <RiskBadge level={row.original.risk_level ?? "low"} />,
   },
   {
     accessorKey: "created_at",
@@ -81,7 +81,7 @@ export default function ApplicationsPage() {
       (app) =>
         app.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         app.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        app.invite_code.toLowerCase().includes(searchTerm.toLowerCase())
+        (app.invite_code ?? "").toLowerCase().includes(searchTerm.toLowerCase())
     ) || [];
 
   return (
