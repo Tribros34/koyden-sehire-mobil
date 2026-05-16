@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/errors/app_exception.dart';
@@ -90,27 +88,18 @@ class FarmerProfileController extends StateNotifier<FarmerProfileState> {
     }
   }
 
-  Future<bool> uploadProfileImage(File file,
-      {String contentType = 'image/jpeg'}) async {
+  Future<bool> uploadProfileImage(
+    List<int> bytes, {
+    String filename = 'photo.jpg',
+    String contentType = 'image/jpeg',
+  }) async {
     state = state.copyWith(isUploadingImage: true, clearError: true);
     try {
-      final pres = await productRepo.getProfileImagePresignedUrl(
+      final url = await productRepo.uploadProfileImage(
+        bytes,
+        filename: filename,
         contentType: contentType,
       );
-      if (pres.uploadUrl.isEmpty) {
-        state = state.copyWith(
-          isUploadingImage: false,
-          errorMessage:
-              'Sunucuda görsel depolama yapılandırılmamış.',
-        );
-        return false;
-      }
-      await productRepo.uploadFileToPresigned(
-        uploadUrl: pres.uploadUrl,
-        file: file,
-        contentType: contentType,
-      );
-      final url = pres.publicUrl ?? pres.key;
       state = state.copyWith(
         isUploadingImage: false,
         profile: state.profile?.copyWith(profileImageUrl: url),

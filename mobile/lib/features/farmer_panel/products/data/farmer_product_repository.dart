@@ -1,11 +1,8 @@
-import 'dart:io';
-
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/api/api_client.dart';
 import '../../../../core/api/api_endpoints.dart';
-import '../../../../core/errors/error_handler.dart';
 import '../models/farmer_product_model.dart';
 
 final farmerProductRepositoryProvider =
@@ -68,64 +65,57 @@ class FarmerProductRepository {
     );
   }
 
-  /// Returns (uploadUrl, key, publicUrl).
-  Future<({String uploadUrl, String key, String? publicUrl})>
-      getProductImagePresignedUrl({String contentType = 'image/jpeg'}) {
+  /// Uploads a product image via multipart POST.
+  /// Returns the public URL of the uploaded image.
+  Future<String> uploadProductImage(
+    List<int> bytes, {
+    String filename = 'photo.jpg',
+    String contentType = 'image/jpeg',
+  }) {
     return _api.post(
       ApiEndpoints.uploadProductImage,
-      data: {'content_type': contentType},
+      data: FormData.fromMap({
+        'file': MultipartFile.fromBytes(
+          bytes,
+          filename: filename,
+          contentType: DioMediaType.parse(contentType),
+        ),
+      }),
       parse: (env) {
         final data = ((env as Map)['data'] as Map?)?.cast<String, dynamic>() ??
             const {};
-        return (
-          uploadUrl: data['upload_url']?.toString() ?? '',
-          key: data['key']?.toString() ?? '',
-          publicUrl: data['public_url']?.toString(),
-        );
+        return data['url']?.toString() ??
+            data['public_url']?.toString() ??
+            data['key']?.toString() ??
+            '';
       },
     );
   }
 
-  Future<({String uploadUrl, String key, String? publicUrl})>
-      getProfileImagePresignedUrl({String contentType = 'image/jpeg'}) {
+  /// Uploads a profile image via multipart POST.
+  /// Returns the public URL of the uploaded image.
+  Future<String> uploadProfileImage(
+    List<int> bytes, {
+    String filename = 'photo.jpg',
+    String contentType = 'image/jpeg',
+  }) {
     return _api.post(
       ApiEndpoints.uploadProfileImage,
-      data: {'content_type': contentType},
+      data: FormData.fromMap({
+        'file': MultipartFile.fromBytes(
+          bytes,
+          filename: filename,
+          contentType: DioMediaType.parse(contentType),
+        ),
+      }),
       parse: (env) {
         final data = ((env as Map)['data'] as Map?)?.cast<String, dynamic>() ??
             const {};
-        return (
-          uploadUrl: data['upload_url']?.toString() ?? '',
-          key: data['key']?.toString() ?? '',
-          publicUrl: data['public_url']?.toString(),
-        );
+        return data['url']?.toString() ??
+            data['public_url']?.toString() ??
+            data['key']?.toString() ??
+            '';
       },
     );
-  }
-
-  Future<void> uploadFileToPresigned({
-    required String uploadUrl,
-    required File file,
-    required String contentType,
-    void Function(int sent, int total)? onProgress,
-  }) async {
-    final dio = Dio();
-    try {
-      final length = await file.length();
-      final stream = file.openRead();
-      await dio.put(
-        uploadUrl,
-        data: stream,
-        onSendProgress: onProgress,
-        options: Options(
-          headers: {
-            HttpHeaders.contentTypeHeader: contentType,
-            HttpHeaders.contentLengthHeader: length,
-          },
-        ),
-      );
-    } on DioException catch (e) {
-      throw mapDioError(e);
-    }
   }
 }

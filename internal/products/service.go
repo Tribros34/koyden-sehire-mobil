@@ -2,6 +2,8 @@ package products
 
 import (
 	"fmt"
+	"net/url"
+	"path"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
@@ -12,10 +14,11 @@ type Service struct {
 	repo      *Repository
 	db        *sqlx.DB
 	publicURL string
+	appEnv    string
 }
 
-func NewService(repo *Repository, db *sqlx.DB, publicURL string) *Service {
-	return &Service{repo: repo, db: db, publicURL: publicURL}
+func NewService(repo *Repository, db *sqlx.DB, publicURL, appEnv string) *Service {
+	return &Service{repo: repo, db: db, publicURL: publicURL, appEnv: appEnv}
 }
 
 func (s *Service) ListPublic(f *ProductFilter) ([]PublicProduct, int, error) {
@@ -141,14 +144,34 @@ func (s *Service) ListAll(page, limit int) ([]Product, int, error) {
 	return s.repo.ListAll(page, limit)
 }
 
-func (s *Service) validateImageURLs(urls []string) error {
-	if s.publicURL == "" {
-		return nil
-	}
-	baseURL := strings.TrimRight(s.publicURL, "/")
-	for _, url := range urls {
-		if !strings.HasPrefix(url, baseURL) {
-			return apperrors.New("INVALID_IMAGE_URL", fmt.Sprintf("Geçersiz resim URL'i: %s", url), 400)
+var allowedImageExts = map[string]bool{
+	".jpg":  true,
+	".jpeg": true,
+	".png":  true,
+	".webp": true,
+}
+
+func (s *Service) validateImageURLs(imageURLs []string) error {
+	for _, raw := range imageURLs {
+		parsed, err := url.Parse(raw)
+		if err != nil {
+			return apperrors.New("INVALID_IMAGE_URL", fmt.Sprintf("Geçersiz resim URL'i: %s", raw), 400)
+		}
+
+		// Always check that the path has an allowed image extension.
+		ext := strings.ToLower(path.Ext(parsed.Path))
+		if !allowedImageExts[ext] {
+			return apperrors.New("INVALID_IMAGE_URL", fmt.Sprintf("Geçersiz resim URL'i: %s", raw), 400)
+		}
+
+		// In production, additionally enforce that the URL comes from the
+		// configured storage domain. Skip this check in development so that
+		// placeholder URLs (e.g. placehold.co) are accepted.
+		if s.appEnv != "development" && s.publicURL != "" {
+			baseURL := strings.TrimRight(s.publicURL, "/")
+			if !strings.HasPrefix(raw, baseURL) {
+				return apperrors.New("INVALID_IMAGE_URL", fmt.Sprintf("Geçersiz resim URL'i: %s", raw), 400)
+			}
 		}
 	}
 	return nil

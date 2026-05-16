@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/errors/app_exception.dart';
@@ -69,27 +67,19 @@ class ProductFormController extends StateNotifier<ProductFormState> {
     state = state.copyWith(data: updater(state.data));
   }
 
-  Future<bool> uploadImage(File file, {String contentType = 'image/jpeg'}) async {
+  Future<bool> uploadImage(
+    List<int> bytes, {
+    String filename = 'photo.jpg',
+    String contentType = 'image/jpeg',
+  }) async {
     state = state.copyWith(isUploadingImage: true, clearError: true);
     try {
-      final pres = await _repo.getProductImagePresignedUrl(
+      final url = await _repo.uploadProductImage(
+        bytes,
+        filename: filename,
         contentType: contentType,
       );
-      if (pres.uploadUrl.isEmpty) {
-        state = state.copyWith(
-          isUploadingImage: false,
-          errorMessage:
-              'Sunucuda görsel depolama yapılandırılmamış. Lütfen yöneticiyle iletişime geçin.',
-        );
-        return false;
-      }
-      await _repo.uploadFileToPresigned(
-        uploadUrl: pres.uploadUrl,
-        file: file,
-        contentType: contentType,
-      );
-      final newUrl = pres.publicUrl ?? pres.key;
-      final next = [...state.data.imageUrls, newUrl];
+      final next = [...state.data.imageUrls, url];
       state = state.copyWith(
         isUploadingImage: false,
         data: state.data.copyWith(imageUrls: next),

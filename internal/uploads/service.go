@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -41,6 +42,7 @@ func (s *Service) UploadProductImage(farmerID string, file io.Reader, filename s
 	buf = buf[:n]
 
 	contentType := http.DetectContentType(buf)
+	log.Printf("[upload] product-image farmerID=%s filename=%s size=%d contentType=%s", farmerID, filename, size, contentType)
 	if !allowedImageTypes[contentType] {
 		return nil, apperrors.New("INVALID_FILE_TYPE", "Sadece JPEG, PNG veya WebP yükleyebilirsiniz", 400)
 	}
@@ -69,6 +71,7 @@ func (s *Service) UploadProfileImage(farmerID string, file io.Reader, filename s
 	buf = buf[:n]
 
 	contentType := http.DetectContentType(buf)
+	log.Printf("[upload] profile-image farmerID=%s filename=%s size=%d contentType=%s", farmerID, filename, size, contentType)
 	if !allowedImageTypes[contentType] {
 		return nil, apperrors.New("INVALID_FILE_TYPE", "Sadece JPEG, PNG veya WebP yükleyebilirsiniz", 400)
 	}

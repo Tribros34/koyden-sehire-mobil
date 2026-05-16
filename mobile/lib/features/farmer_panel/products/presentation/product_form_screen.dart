@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -129,13 +127,32 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       imageQuality: 85,
     );
     if (picked == null) return;
+
+    final List<int> bytes;
+    try {
+      bytes = await picked.readAsBytes();
+    } catch (_) {
+      if (!mounted) return;
+      context.snack('Fotoğraf okunamadı. Lütfen tekrar deneyin.', isError: true);
+      return;
+    }
+
+    final ext = picked.name.split('.').last.toLowerCase();
+    final contentType = ext == 'png' ? 'image/png'
+        : ext == 'webp' ? 'image/webp'
+        : 'image/jpeg';
+    final filename = '${DateTime.now().millisecondsSinceEpoch}_product.$ext';
+
     final ok = await ref
         .read(productFormProvider.notifier)
-        .uploadImage(File(picked.path));
+        .uploadImage(bytes, filename: filename, contentType: contentType);
     if (!mounted) return;
     if (!ok) {
       final err = ref.read(productFormProvider).errorMessage;
-      if (err != null) context.snack(err, isError: true);
+      context.snack(
+        err ?? 'Fotoğraf yüklenemedi. Lütfen tekrar deneyin.',
+        isError: true,
+      );
     }
   }
 

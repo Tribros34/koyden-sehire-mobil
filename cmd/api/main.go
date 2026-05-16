@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -69,17 +70,37 @@ func main() {
 		log.Println("migrations applied")
 	}
 
+	// Treat placeholder values (containing "<" or "your-") as unconfigured.
+	storageConfigured := cfg.Storage.Endpoint != "" &&
+		!strings.Contains(cfg.Storage.Endpoint, "<") &&
+		cfg.Storage.AccessKey != "" &&
+		!strings.HasPrefix(cfg.Storage.AccessKey, "your-") &&
+		cfg.Storage.SecretKey != "" &&
+		!strings.HasPrefix(cfg.Storage.SecretKey, "your-")
+	log.Printf("app_env=%s storage_provider=%s storage_configured=%v", cfg.App.Env, cfg.Storage.Provider, storageConfigured)
+
 	var storageProvider pkgstorage.Provider
-	storageProvider, err = pkgstorage.NewR2Provider(
-		cfg.Storage.Endpoint,
-		cfg.Storage.AccessKey,
-		cfg.Storage.SecretKey,
-		cfg.Storage.Bucket,
-		cfg.Storage.PublicURL,
-	)
-	if err != nil {
-		log.Printf("warning: storage provider init failed: %v", err)
-		storageProvider = &pkgstorage.NoopProvider{}
+	if storageConfigured {
+		storageProvider, err = pkgstorage.NewR2Provider(
+			cfg.Storage.Endpoint,
+			cfg.Storage.AccessKey,
+			cfg.Storage.SecretKey,
+			cfg.Storage.Bucket,
+			cfg.Storage.PublicURL,
+		)
+		if err != nil {
+			if cfg.App.Env == "development" {
+				log.Printf("warning: R2 storage init failed (%v) — using dev placeholder storage", err)
+				storageProvider = &pkgstorage.DevProvider{}
+			} else {
+				log.Fatalf("storage provider init failed (production requires real storage config): %v", err)
+			}
+		}
+	} else if cfg.App.Env == "development" {
+		log.Printf("warning: storage credentials not configured — using dev placeholder storage")
+		storageProvider = &pkgstorage.DevProvider{}
+	} else {
+		log.Fatalf("storage credentials not configured (S3_ENDPOINT, S3_ACCESS_KEY, S3_SECRET_KEY are required in production)")
 	}
 
 	var smsProvider sms.Provider
@@ -109,7 +130,7 @@ func main() {
 	catHandler := categories.NewHandler(catSvc)
 
 	productRepo := products.NewRepository(db, cfg.Storage.PublicURL)
-	productSvc := products.NewService(productRepo, db, cfg.Storage.PublicURL)
+	productSvc := products.NewService(productRepo, db, cfg.Storage.PublicURL, cfg.App.Env)
 	productHandler := products.NewHandler(productSvc)
 
 	inviteRepo := invites.NewRepository(db)
