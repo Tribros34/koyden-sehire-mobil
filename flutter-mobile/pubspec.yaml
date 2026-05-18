@@ -1,0 +1,56 @@
+name: koyden_sehire
+description: Köyden Şehre - üreticilerle alıcıları doğrudan buluşturan platform.
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+  flutter: ">=3.19.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Routing
+  go_router: ^14.0.0
+
+  # State management
+  get: ^4.6.6
+
+  # Charts (admin dashboard)
+  fl_chart: ^0.69.0
+
+  # HTTP
+  dio: ^5.4.0
+
+  # Storage
+  flutter_secure_storage: ^9.0.0
+
+  # Media
+  image_picker: ^1.0.7
+  video_compress: ^3.1.2
+  cached_network_image: ^3.3.1
+
+  # Utils
+  intl: ^0.20.2
+  url_launcher: ^6.2.5
+  flutter_svg: ^2.0.10
+  shimmer: ^3.0.0
+  fluttertoast: ^8.2.4
+  permission_handler: ^11.3.0
+  connectivity_plus: ^6.0.3
+  share_plus: ^9.0.0
+
+  cupertino_icons: ^1.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/

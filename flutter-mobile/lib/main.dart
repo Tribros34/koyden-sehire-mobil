@@ -1,0 +1,27 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
+
+import 'package:koyden_sehire/app/app.dart';
+import 'package:koyden_sehire/app/constants.dart';
+import 'package:koyden_sehire/core/bindings/app_binding.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Refuse to launch a release build that hasn't been given an explicit
+  // BASE_URL — the dev default points at the Android emulator host loopback
+  // and is unreachable from a real device / app store build.
+  if (kReleaseMode && AppConstants.isDevDefaultBaseUrl) {
+    throw StateError(
+      'BASE_URL is missing in release build. '
+      'Pass --dart-define=BASE_URL=https://api.example.com/api/v1',
+    );
+  }
+
+  await initializeDateFormatting('tr_TR');
+  // Register all global services/repositories before runApp so screens can
+  // resolve them synchronously via Get.find().
+  AppBinding().dependencies();
+  runApp(const KoydenSehireApp());
+}

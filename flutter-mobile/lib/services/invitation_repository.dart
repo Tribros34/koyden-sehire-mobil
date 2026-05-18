@@ -1,0 +1,21 @@
+import 'package:koyden_sehire/core/api/api_client.dart';
+import 'package:koyden_sehire/core/api/api_endpoints.dart';
+import 'package:koyden_sehire/models/invitation_model.dart';
+
+class InvitationRepository {
+  final ApiClient _api;
+  InvitationRepository(this._api);
+
+  Future<List<InviteCodeItem>> list() {
+    return _api.get(
+      ApiEndpoints.farmerInvites,
+      parse: (env) {
+        final list = ((env as Map)['data'] as List?) ?? const [];
+        return list
+            .whereType<Map>()
+            .map((m) => InviteCodeItem.fromJson(m.cast<String, dynamic>()))
+            .toList();
+      },
+    );
+  }
+}
