@@ -16,9 +16,9 @@ class AppException implements Exception {
 }
 
 class NetworkException extends AppException {
-  const NetworkException()
+  const NetworkException({String? message})
       : super(
-          message: 'İnternet bağlantısı yok',
+          message: message ?? 'İnternet bağlantısı yok',
           code: 'NETWORK',
         );
 }

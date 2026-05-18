@@ -1,4 +1,4 @@
-import 'phone_formatter.dart';
+import 'package:koyden_sehire/core/utils/phone_formatter.dart';
 
 class Validators {
   static String? required(String? v, {String field = 'Bu alan'}) {

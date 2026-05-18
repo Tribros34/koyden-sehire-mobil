@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../../app/theme.dart';
+import 'package:koyden_sehire/app/theme.dart';
 
 class ShimmerProductCard extends StatelessWidget {
   final double? width;

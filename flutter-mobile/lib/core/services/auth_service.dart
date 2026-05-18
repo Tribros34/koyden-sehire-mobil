@@ -1,10 +1,10 @@
 import 'package:get/get.dart';
 
-import '../../features/auth/data/auth_repository.dart';
-import '../../features/auth/models/login_request.dart';
-import '../../features/auth/providers/auth_state.dart';
-import '../errors/app_exception.dart';
-import '../storage/secure_storage_service.dart';
+import 'package:koyden_sehire/services/auth_repository.dart';
+import 'package:koyden_sehire/models/auth/login_request.dart';
+import 'package:koyden_sehire/models/auth/auth_state.dart';
+import 'package:koyden_sehire/core/errors/app_exception.dart';
+import 'package:koyden_sehire/core/storage/secure_storage_service.dart';
 
 /// Global authentication state, persisted via [SecureStorageService].
 ///

@@ -2,9 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
-import 'app/app.dart';
-import 'app/constants.dart';
-import 'core/bindings/app_binding.dart';
+import 'package:koyden_sehire/app/app.dart';
+import 'package:koyden_sehire/app/constants.dart';
+import 'package:koyden_sehire/core/bindings/app_binding.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

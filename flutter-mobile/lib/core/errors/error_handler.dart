@@ -1,13 +1,15 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 
-import 'app_exception.dart';
+import 'package:koyden_sehire/app/constants.dart';
+import 'package:koyden_sehire/core/errors/app_exception.dart';
 
 /// Maps Dio errors and the backend response envelope into [AppException].
 /// Backend error shape: `{success:false, error:{code, message}}`.
 AppException mapDioError(Object error) {
   if (error is AppException) return error;
   if (error is! DioException) {
-    return AppException(message: 'Beklenmeyen bir hata oluştu');
+    return const AppException(message: 'Beklenmeyen bir hata oluştu');
   }
 
   final type = error.type;
@@ -15,6 +17,12 @@ AppException mapDioError(Object error) {
       type == DioExceptionType.connectionTimeout ||
       type == DioExceptionType.receiveTimeout ||
       type == DioExceptionType.sendTimeout) {
+    if (kDebugMode) {
+      return const NetworkException(
+        message: 'Sunucuya ulaşılamıyor (${AppConstants.baseUrl}). '
+            'Backend çalışıyor mu? BASE_URL doğru mu?',
+      );
+    }
     return const NetworkException();
   }
 

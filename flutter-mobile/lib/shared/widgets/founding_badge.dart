@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../app/theme.dart';
+import 'package:koyden_sehire/app/theme.dart';
 
 class FoundingBadge extends StatelessWidget {
   final bool small;
@@ -16,7 +16,7 @@ class FoundingBadge extends StatelessWidget {
         vertical: small ? 2 : 4,
       ),
       decoration: BoxDecoration(
-        color: AppColors.secondary.withOpacity(0.18),
+        color: AppColors.secondary.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'app_button.dart';
+import 'package:koyden_sehire/shared/widgets/app_button.dart';
 
 class AppErrorWidget extends StatelessWidget {
   final String message;

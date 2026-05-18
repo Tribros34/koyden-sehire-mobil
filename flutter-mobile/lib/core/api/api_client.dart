@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
 
-import '../../app/constants.dart';
-import '../errors/app_exception.dart';
-import '../errors/error_handler.dart';
-import '../storage/secure_storage_service.dart';
+import 'package:koyden_sehire/app/constants.dart';
+import 'package:koyden_sehire/core/errors/app_exception.dart';
+import 'package:koyden_sehire/core/errors/error_handler.dart';
+import 'package:koyden_sehire/core/storage/secure_storage_service.dart';
 
 class ApiClient {
   final SecureStorageService _storage;

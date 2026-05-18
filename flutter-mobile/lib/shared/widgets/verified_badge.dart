@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../app/theme.dart';
+import 'package:koyden_sehire/app/theme.dart';
 
 class VerifiedBadge extends StatelessWidget {
   final bool small;
@@ -16,7 +16,7 @@ class VerifiedBadge extends StatelessWidget {
         vertical: small ? 2 : 4,
       ),
       decoration: BoxDecoration(
-        color: AppColors.success.withOpacity(0.12),
+        color: AppColors.success.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(

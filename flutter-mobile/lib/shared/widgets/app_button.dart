@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../app/theme.dart';
+import 'package:koyden_sehire/app/theme.dart';
 
 enum AppButtonVariant { primary, secondary, destructive, text }
 

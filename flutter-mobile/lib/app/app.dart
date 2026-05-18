@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart' hide Trans;
 
-import '../core/services/connectivity_service.dart';
-import 'constants.dart';
-import 'router.dart';
-import 'theme.dart';
+import 'package:koyden_sehire/core/services/connectivity_service.dart';
+import 'package:koyden_sehire/app/constants.dart';
+import 'package:koyden_sehire/app/router.dart';
+import 'package:koyden_sehire/app/theme.dart';
 
 class KoydenSehireApp extends StatelessWidget {
   const KoydenSehireApp({super.key});

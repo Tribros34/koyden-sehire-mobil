@@ -41,7 +41,18 @@
       "Bash(go vet *)",
       "Bash(echo \"EXIT=$?\")",
       "Bash(echo \"VET_EXIT=$?\")",
-      "Bash(echo \"BUILD_EXIT=$?\")"
+      "Bash(echo \"BUILD_EXIT=$?\")",
+      "Bash(flutter test *)",
+      "Bash(python _migrate_imports.py)",
+      "Bash(netstat -ano)",
+      "Bash(findstr :8080)",
+      "Bash(curl *)",
+      "Bash(dart fix *)",
+      "Bash(python -c ' *)",
+      "Bash(docker info *)",
+      "Bash(taskkill /IM \"Docker Desktop.exe\" /F)",
+      "Bash(start \"\" \"C:\\\\Program Files\\\\Docker\\\\Docker\\\\Docker Desktop.exe\")",
+      "Bash(break)"
     ]
   }
 }

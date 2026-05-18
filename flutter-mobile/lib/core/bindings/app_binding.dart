@@ -1,29 +1,29 @@
 import 'package:get/get.dart';
 
-import '../../features/admin/data/repositories/admin_repository.dart';
-import '../../features/auth/data/auth_repository.dart';
-import '../../features/farmer_application/data/application_repository.dart';
-import '../../features/farmer_application/providers/application_provider.dart';
-import '../../features/farmer_panel/dashboard/data/dashboard_repository.dart';
-import '../../features/farmer_panel/dashboard/providers/dashboard_provider.dart';
-import '../../features/farmer_panel/invitations/data/invitation_repository.dart';
-import '../../features/farmer_panel/invitations/providers/invitation_provider.dart';
-import '../../features/farmer_panel/products/data/farmer_product_repository.dart';
-import '../../features/farmer_panel/products/providers/my_products_provider.dart';
-import '../../features/farmer_panel/products/providers/product_form_provider.dart';
-import '../../features/farmer_panel/profile/data/farmer_profile_repository.dart';
-import '../../features/farmer_panel/profile/providers/farmer_profile_provider.dart';
-import '../../features/otp/data/otp_repository.dart';
-import '../../features/public/categories/data/category_repository.dart';
-import '../../features/public/categories/providers/category_provider.dart';
-import '../../features/public/farmers/data/farmer_repository.dart';
-import '../../features/public/home/providers/home_provider.dart';
-import '../../features/public/products/data/product_repository.dart';
-import '../../features/public/products/providers/product_list_provider.dart';
-import '../api/api_client.dart';
-import '../services/auth_service.dart';
-import '../services/connectivity_service.dart';
-import '../storage/secure_storage_service.dart';
+import 'package:koyden_sehire/services/admin_repository.dart';
+import 'package:koyden_sehire/services/auth_repository.dart';
+import 'package:koyden_sehire/services/application_repository.dart';
+import 'package:koyden_sehire/controllers/application_form_controller.dart';
+import 'package:koyden_sehire/services/dashboard_repository.dart';
+import 'package:koyden_sehire/controllers/farmer/dashboard_controller.dart';
+import 'package:koyden_sehire/services/invitation_repository.dart';
+import 'package:koyden_sehire/controllers/farmer/invitation_controller.dart';
+import 'package:koyden_sehire/services/farmer_product_repository.dart';
+import 'package:koyden_sehire/controllers/farmer/my_products_controller.dart';
+import 'package:koyden_sehire/controllers/farmer/product_form_controller.dart';
+import 'package:koyden_sehire/services/farmer_profile_repository.dart';
+import 'package:koyden_sehire/controllers/farmer/farmer_profile_controller.dart';
+import 'package:koyden_sehire/services/otp_repository.dart';
+import 'package:koyden_sehire/services/category_repository.dart';
+import 'package:koyden_sehire/controllers/public/category_controller.dart';
+import 'package:koyden_sehire/services/farmer_repository.dart';
+import 'package:koyden_sehire/controllers/public/home_controller.dart';
+import 'package:koyden_sehire/services/product_repository.dart';
+import 'package:koyden_sehire/controllers/public/product_list_controller.dart';
+import 'package:koyden_sehire/core/api/api_client.dart';
+import 'package:koyden_sehire/core/services/auth_service.dart';
+import 'package:koyden_sehire/core/services/connectivity_service.dart';
+import 'package:koyden_sehire/core/storage/secure_storage_service.dart';
 
 class AppBinding extends Bindings {
   @override

@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
-import '../../app/theme.dart';
+import 'package:koyden_sehire/app/theme.dart';
 
 class ImageCarousel extends StatefulWidget {
   final List<String> imageUrls;

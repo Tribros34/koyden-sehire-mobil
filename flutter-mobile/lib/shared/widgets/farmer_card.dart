@@ -2,10 +2,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../app/theme.dart';
-import '../../features/public/farmers/models/farmer_model.dart';
-import 'founding_badge.dart';
-import 'verified_badge.dart';
+import 'package:koyden_sehire/app/theme.dart';
+import 'package:koyden_sehire/models/farmer_model.dart';
+import 'package:koyden_sehire/shared/widgets/founding_badge.dart';
+import 'package:koyden_sehire/shared/widgets/verified_badge.dart';
 
 class FarmerCard extends StatelessWidget {
   final FarmerSummary farmer;
