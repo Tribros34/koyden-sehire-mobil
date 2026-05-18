@@ -128,15 +128,30 @@ func (h *Handler) Create(c *fiber.Ctx) error {
 	inviteCodeID := ic.ID
 	referredByID := ic.OwnerUserID
 
-	app, err := h.repo.Create(&req, string(hash), &inviteCodeID, &referredByID, source)
+	// Atomically consume one invite slot before creating the application.
+	// The WHERE clause guards against TOCTOU: if two requests pass the
+	// earlier check simultaneously, only one UPDATE will succeed.
+	consumeRes, err := h.db.Exec(`
+		UPDATE invite_codes
+		SET used_count = used_count + 1, updated_at = NOW()
+		WHERE id = $1
+		  AND is_active = true
+		  AND used_count < max_uses
+		  AND (expires_at IS NULL OR expires_at > NOW())
+	`, ic.ID)
 	if err != nil {
 		return response.Error(c, apperrors.ErrInternal)
 	}
+	if affected, _ := consumeRes.RowsAffected(); affected == 0 {
+		return response.BadRequest(c, "Davet kodu dolmuş veya geçersiz")
+	}
 
-	h.db.Exec(`
-		UPDATE invite_codes SET used_count = used_count + 1, updated_at = NOW()
-		WHERE id = $1
-	`, ic.ID)
+	app, err := h.repo.Create(&req, string(hash), &inviteCodeID, &referredByID, source)
+	if err != nil {
+		// Roll back the invite consumption since the application failed.
+		h.db.Exec(`UPDATE invite_codes SET used_count = used_count - 1, updated_at = NOW() WHERE id = $1`, ic.ID)
+		return response.Error(c, apperrors.ErrInternal)
+	}
 
 	h.rdb.Del(ctx, verifiedKey)
 

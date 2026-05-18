@@ -17,6 +17,13 @@ class AdminDashboardController extends GetxController {
     load();
   }
 
+  @override
+  void onClose() {
+    // No Workers/StreamSubscriptions to cancel today, but keep the override
+    // wired so future additions don't leak.
+    super.onClose();
+  }
+
   Future<void> load() async {
     isLoading.value = true;
     error.value = '';

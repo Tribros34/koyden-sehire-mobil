@@ -41,15 +41,18 @@ class ApiEndpoints {
   static String adminProduct(String id) => '/admin/products/$id';
   static String adminProductAction(String id, String action) =>
       '/admin/products/$id/$action';
-  static const String adminCategories = '/categories';
+  static const String adminCategories = '/admin/categories';
 
   // Admin - Farmers
   static const String adminFarmers = '/admin/farmers';
   static String adminFarmer(String id) => '/admin/farmers/$id';
   static String adminFarmerSuspend(String id) => '/admin/farmers/$id/suspend';
-  static String adminFarmerActivate(String id) => '/admin/farmers/$id/activate';
+  static String adminFarmerActivate(String id) => '/admin/farmers/$id/reactivate';
+
+  // Admin - Dashboard
+  static const String adminDashboard = '/admin/dashboard';
 
   // Admin - Analytics
   static const String adminCityDensity = '/admin/analytics/city-density';
-  static const String adminInviteNetwork = '/admin/invite-network';
+  static const String adminInviteNetwork = '/admin/analytics/invite-network';
 }

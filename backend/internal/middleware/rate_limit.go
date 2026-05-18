@@ -45,6 +45,11 @@ func OTPSendRateLimit(rdb *redis.Client) fiber.Handler {
 				Phone string `json:"phone"`
 			}
 			c.BodyParser(&body)
+			// Empty/invalid phone → fall back to IP to prevent attackers
+			// from sharing a single "otp:" bucket and rate-limiting real users.
+			if body.Phone == "" {
+				return fmt.Sprintf("otp_ip:%s", c.IP())
+			}
 			return fmt.Sprintf("otp:%s", body.Phone)
 		},
 		Max:    3,
@@ -53,13 +58,38 @@ func OTPSendRateLimit(rdb *redis.Client) fiber.Handler {
 }
 
 func LoginRateLimit(rdb *redis.Client) fiber.Handler {
-	return RateLimit(rdb, RateLimitConfig{
-		KeyFunc: func(c *fiber.Ctx) string {
-			return fmt.Sprintf("login:%s", c.IP())
-		},
-		Max:    10,
-		Window: 15 * time.Minute,
-	})
+	return func(c *fiber.Ctx) error {
+		ctx := context.Background()
+
+		var body struct {
+			Phone string `json:"phone"`
+		}
+		c.BodyParser(&body)
+
+		ipKey := fmt.Sprintf("rl:login_ip:%s", c.IP())
+		ipCount, err := rdb.Incr(ctx, ipKey).Result()
+		if err == nil && ipCount == 1 {
+			rdb.Expire(ctx, ipKey, 15*time.Minute)
+		}
+
+		// Per-phone counter prevents attackers from churning IPs to brute
+		// force a single account.
+		var phoneCount int64
+		if body.Phone != "" {
+			phoneKey := fmt.Sprintf("rl:login_phone:%s", body.Phone)
+			phoneCount, err = rdb.Incr(ctx, phoneKey).Result()
+			if err == nil && phoneCount == 1 {
+				rdb.Expire(ctx, phoneKey, 15*time.Minute)
+			}
+		}
+
+		// IP limit is generous (covers NAT'd campus networks),
+		// phone limit is tight (5 attempts per phone per 15 min).
+		if ipCount > 30 || phoneCount > 5 {
+			return response.TooManyRequests(c, "Çok fazla istek gönderdiniz, lütfen bekleyin")
+		}
+		return c.Next()
+	}
 }
 
 func InviteValidateRateLimit(rdb *redis.Client) fiber.Handler {
@@ -81,17 +111,22 @@ func VideoPresignRateLimit(rdb *redis.Client) fiber.Handler {
 		}
 		c.BodyParser(&body)
 
-		phoneKey := fmt.Sprintf("rl:video_presign:%s", body.Phone)
 		ipKey := fmt.Sprintf("rl:video_presign_ip:%s", c.IP())
-
-		phoneCount, err := rdb.Incr(ctx, phoneKey).Result()
-		if err == nil && phoneCount == 1 {
-			rdb.Expire(ctx, phoneKey, time.Hour)
-		}
-
 		ipCount, err := rdb.Incr(ctx, ipKey).Result()
 		if err == nil && ipCount == 1 {
 			rdb.Expire(ctx, ipKey, time.Hour)
+		}
+
+		// Only enforce phone bucket when phone is actually provided;
+		// otherwise an attacker with malformed bodies could exhaust
+		// the shared "" bucket and starve legitimate users.
+		var phoneCount int64
+		if body.Phone != "" {
+			phoneKey := fmt.Sprintf("rl:video_presign:%s", body.Phone)
+			phoneCount, err = rdb.Incr(ctx, phoneKey).Result()
+			if err == nil && phoneCount == 1 {
+				rdb.Expire(ctx, phoneKey, time.Hour)
+			}
 		}
 
 		if phoneCount > 5 || ipCount > 10 {

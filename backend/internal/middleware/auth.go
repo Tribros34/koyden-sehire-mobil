@@ -26,18 +26,29 @@ func RequireAuth(db *sqlx.DB, jwtSecret string) fiber.Handler {
 
 		tokenStr := strings.TrimPrefix(header, "Bearer ")
 
-		token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
-			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fiber.NewError(401, "Geçersiz token imzalama metodu")
-			}
-			return []byte(jwtSecret), nil
-		})
+		token, err := jwt.Parse(
+			tokenStr,
+			func(t *jwt.Token) (interface{}, error) {
+				if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, fiber.NewError(401, "Geçersiz token imzalama metodu")
+				}
+				return []byte(jwtSecret), nil
+			},
+			jwt.WithValidMethods([]string{"HS256"}),
+			jwt.WithExpirationRequired(),
+		)
 		if err != nil || !token.Valid {
 			return response.Unauthorized(c, "Geçersiz veya süresi dolmuş token")
 		}
 
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
+			return response.Unauthorized(c, "Geçersiz token")
+		}
+
+		// Defense in depth: explicitly verify exp claim is in the future,
+		// in case the library default ever changes.
+		if exp, ok := claims["exp"].(float64); !ok || int64(exp) <= 0 {
 			return response.Unauthorized(c, "Geçersiz token")
 		}
 

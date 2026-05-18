@@ -22,8 +22,28 @@ func NewService(repo *Repository, db *sqlx.DB, stor storage.Provider, appEnv str
 	return &Service{repo: repo, db: db, storage: stor, appEnv: appEnv}
 }
 
-func (s *Service) GetDashboard() (*DashboardStats, error) {
-	return s.repo.GetDashboardStats()
+func (s *Service) GetDashboard() (*DashboardResponse, error) {
+	stats, err := s.repo.GetDashboardStats()
+	if err != nil {
+		return nil, err
+	}
+	apps, _ := s.repo.GetApplicationsByDay()
+	cats, _ := s.repo.GetProductsByCategory()
+	cities, _ := s.repo.GetProducersByCity()
+	return &DashboardResponse{
+		Stats:              *stats,
+		ApplicationsByDay:  apps,
+		ProductsByCategory: cats,
+		ProducersByCity:    cities,
+	}, nil
+}
+
+func (s *Service) GetCityDensity() ([]CityDensityPoint, error) {
+	return s.repo.GetCityDensity()
+}
+
+func (s *Service) GetInviteNetwork() (*InviteNetworkNode, error) {
+	return s.repo.GetInviteNetwork()
 }
 
 type ApproveResult struct {

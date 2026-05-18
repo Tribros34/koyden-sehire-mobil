@@ -16,7 +16,10 @@ func NewHandler(svc *Service) *Handler {
 }
 
 func (h *Handler) GetProfile(c *fiber.Ctx) error {
-	userID := c.Locals(middleware.UserIDKey).(string)
+	userID, _ := c.Locals(middleware.UserIDKey).(string)
+	if userID == "" {
+		return response.Unauthorized(c, "Kimlik doğrulama gerekli")
+	}
 
 	user, profile, err := h.svc.GetProfile(userID)
 	if err != nil {
@@ -27,7 +30,10 @@ func (h *Handler) GetProfile(c *fiber.Ctx) error {
 }
 
 func (h *Handler) UpdateProfile(c *fiber.Ctx) error {
-	userID := c.Locals(middleware.UserIDKey).(string)
+	userID, _ := c.Locals(middleware.UserIDKey).(string)
+	if userID == "" {
+		return response.Unauthorized(c, "Kimlik doğrulama gerekli")
+	}
 
 	var req UpdateProfileRequest
 	if err := c.BodyParser(&req); err != nil {

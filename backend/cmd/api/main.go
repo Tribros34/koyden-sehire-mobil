@@ -233,6 +233,8 @@ func main() {
 
 	adminGroup := api.Group("/admin", requireAuth, requireAdmin)
 	adminGroup.Get("/dashboard", adminHandler.Dashboard)
+	adminGroup.Get("/analytics/city-density", adminHandler.CityDensity)
+	adminGroup.Get("/analytics/invite-network", adminHandler.InviteNetwork)
 	adminGroup.Get("/applications", adminHandler.ListApplications)
 	adminGroup.Get("/applications/:id", adminHandler.GetApplication)
 	adminGroup.Post("/applications/:id/approve", adminHandler.ApproveApplication)

@@ -76,12 +76,11 @@ class FarmerProductRepository {
         ),
       }),
       parse: (env) {
+        // Backend uploads handler always returns `{success, data: {url: "..."}}`
+        // (see backend/internal/uploads/dto.go::UploadImageResponse).
         final data = ((env as Map)['data'] as Map?)?.cast<String, dynamic>() ??
             const {};
-        return data['url']?.toString() ??
-            data['public_url']?.toString() ??
-            data['key']?.toString() ??
-            '';
+        return data['url']?.toString() ?? '';
       },
     );
   }
@@ -103,12 +102,11 @@ class FarmerProductRepository {
         ),
       }),
       parse: (env) {
+        // Backend uploads handler always returns `{success, data: {url: "..."}}`
+        // (see backend/internal/uploads/dto.go::UploadImageResponse).
         final data = ((env as Map)['data'] as Map?)?.cast<String, dynamic>() ??
             const {};
-        return data['url']?.toString() ??
-            data['public_url']?.toString() ??
-            data['key']?.toString() ??
-            '';
+        return data['url']?.toString() ?? '';
       },
     );
   }

@@ -73,12 +73,13 @@ class _ApplicationFormScreenState extends State<ApplicationFormScreen> {
 
       return PopScope(
         canPop: false,
-        onPopInvoked: (didPop) async {
+        onPopInvokedWithResult: (didPop, _) async {
           if (didPop) return;
-          if (await _confirmExit() && mounted) {
-            ctrl.reset();
-            context.go('/');
-          }
+          final confirm = await _confirmExit();
+          if (!confirm || !mounted) return;
+          ctrl.reset();
+          if (!mounted) return;
+          context.go('/');
         },
         child: Scaffold(
           appBar: AppBar(
@@ -86,10 +87,11 @@ class _ApplicationFormScreenState extends State<ApplicationFormScreen> {
             leading: IconButton(
               icon: const Icon(Icons.close),
               onPressed: () async {
-                if (await _confirmExit() && mounted) {
-                  ctrl.reset();
-                  context.go('/');
-                }
+                final confirm = await _confirmExit();
+                if (!confirm || !mounted) return;
+                ctrl.reset();
+                if (!mounted) return;
+                context.go('/');
               },
             ),
           ),

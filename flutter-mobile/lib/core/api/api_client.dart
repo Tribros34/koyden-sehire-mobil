@@ -102,6 +102,11 @@ class _AuthInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     if (err.response?.statusCode == 401) {
+      // TODO(auth-refresh): introduce /auth/refresh endpoint + retry-once
+      // with a refresh token before forcing logout. Today the access token
+      // is short-lived and every expiry forces the user through full
+      // OTP+login. Add a refresh token to the login response, store it in
+      // secure storage, and call it from here before invoking _onUnauthorized.
       _storage.clearAll();
       _onUnauthorized();
     }

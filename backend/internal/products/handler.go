@@ -45,7 +45,10 @@ func (h *Handler) GetByID(c *fiber.Ctx) error {
 }
 
 func (h *Handler) FarmerList(c *fiber.Ctx) error {
-	farmerID := c.Locals(middleware.UserIDKey).(string)
+	farmerID, _ := c.Locals(middleware.UserIDKey).(string)
+	if farmerID == "" {
+		return response.Unauthorized(c, "Kimlik doğrulama gerekli")
+	}
 	products, err := h.svc.ListByFarmer(farmerID)
 	if err != nil {
 		return response.Error(c, err)
@@ -54,7 +57,10 @@ func (h *Handler) FarmerList(c *fiber.Ctx) error {
 }
 
 func (h *Handler) FarmerCreate(c *fiber.Ctx) error {
-	farmerID := c.Locals(middleware.UserIDKey).(string)
+	farmerID, _ := c.Locals(middleware.UserIDKey).(string)
+	if farmerID == "" {
+		return response.Unauthorized(c, "Kimlik doğrulama gerekli")
+	}
 
 	var req CreateProductRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -72,7 +78,10 @@ func (h *Handler) FarmerCreate(c *fiber.Ctx) error {
 }
 
 func (h *Handler) FarmerGetByID(c *fiber.Ctx) error {
-	farmerID := c.Locals(middleware.UserIDKey).(string)
+	farmerID, _ := c.Locals(middleware.UserIDKey).(string)
+	if farmerID == "" {
+		return response.Unauthorized(c, "Kimlik doğrulama gerekli")
+	}
 	id := c.Params("id")
 
 	p, err := h.svc.GetByIDAndFarmer(id, farmerID)
@@ -83,7 +92,10 @@ func (h *Handler) FarmerGetByID(c *fiber.Ctx) error {
 }
 
 func (h *Handler) FarmerUpdate(c *fiber.Ctx) error {
-	farmerID := c.Locals(middleware.UserIDKey).(string)
+	farmerID, _ := c.Locals(middleware.UserIDKey).(string)
+	if farmerID == "" {
+		return response.Unauthorized(c, "Kimlik doğrulama gerekli")
+	}
 	id := c.Params("id")
 
 	var req UpdateProductRequest
@@ -102,7 +114,10 @@ func (h *Handler) FarmerUpdate(c *fiber.Ctx) error {
 }
 
 func (h *Handler) FarmerUpdateStatus(c *fiber.Ctx) error {
-	farmerID := c.Locals(middleware.UserIDKey).(string)
+	farmerID, _ := c.Locals(middleware.UserIDKey).(string)
+	if farmerID == "" {
+		return response.Unauthorized(c, "Kimlik doğrulama gerekli")
+	}
 	id := c.Params("id")
 
 	var req UpdateStatusRequest
@@ -157,7 +172,9 @@ func (h *Handler) AdminApprove(c *fiber.Ctx) error {
 func (h *Handler) AdminReject(c *fiber.Ctx) error {
 	id := c.Params("id")
 	var req AdminRejectRequest
-	c.BodyParser(&req)
+	if err := c.BodyParser(&req); err != nil {
+		return response.BadRequest(c, "Geçersiz istek gövdesi")
+	}
 	if err := h.svc.AdminReject(id, req.AdminNote); err != nil {
 		return response.Error(c, err)
 	}
@@ -190,16 +207,30 @@ func parseFilter(c *fiber.Ctx) *ProductFilter {
 		limit = 20
 	}
 
+	sort := c.Query("sort", "newest")
+	switch sort {
+	case "newest", "price_asc", "price_desc":
+	default:
+		sort = "newest"
+	}
+
+	stockStatus := c.Query("stock_status")
+	switch stockStatus {
+	case "", "in_stock", "out_of_stock":
+	default:
+		stockStatus = ""
+	}
+
 	f := &ProductFilter{
 		Search:      c.Query("search"),
 		CategoryID:  c.Query("category_id"),
 		City:        c.Query("city"),
 		District:    c.Query("district"),
 		Village:     c.Query("village"),
-		Sort:        c.Query("sort", "newest"),
+		Sort:        sort,
 		Page:        page,
 		Limit:       limit,
-		StockStatus: c.Query("stock_status"),
+		StockStatus: stockStatus,
 	}
 
 	if minP := c.Query("min_price"); minP != "" {

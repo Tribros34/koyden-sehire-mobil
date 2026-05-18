@@ -13,43 +13,41 @@ class AdminRepository {
   AdminRepository(this._client);
 
   Future<AdminDashboardData> getDashboard() async {
-    final results = await Future.wait([
-      _client.get<Map<String, dynamic>>(
-        ApiEndpoints.adminApplications,
-        query: {'page': 1, 'limit': 1, 'status': 'pending'},
-        parse: (d) => d as Map<String, dynamic>,
-      ),
-      _client.get<Map<String, dynamic>>(
-        ApiEndpoints.adminProducts,
-        query: {'page': 1, 'limit': 1, 'status': 'pending'},
-        parse: (d) => d as Map<String, dynamic>,
-      ),
-      _client.get<Map<String, dynamic>>(
-        ApiEndpoints.adminProducts,
-        query: {'page': 1, 'limit': 1, 'status': 'active'},
-        parse: (d) => d as Map<String, dynamic>,
-      ),
-    ]);
+    return _client.get<AdminDashboardData>(
+      ApiEndpoints.adminDashboard,
+      parse: (env) {
+        final data =
+            ((env as Map)['data'] as Map?)?.cast<String, dynamic>() ?? const {};
+        final stats =
+            (data['stats'] as Map?)?.cast<String, dynamic>() ?? const {};
 
-    final pendingApps =
-        (results[0]['pagination']?['total'] as num?)?.toInt() ?? 0;
-    final pendingProds =
-        (results[1]['pagination']?['total'] as num?)?.toInt() ?? 0;
-    final activeProds =
-        (results[2]['pagination']?['total'] as num?)?.toInt() ?? 0;
+        List<ChartPoint> parsePoints(dynamic raw) {
+          if (raw is! List) return const [];
+          return raw
+              .whereType<Map>()
+              .map((m) => ChartPoint(
+                    name: (m['name'] ?? '').toString(),
+                    value: (m['value'] as num?)?.toDouble() ?? 0,
+                  ))
+              .toList();
+        }
 
-    return AdminDashboardData(
-      stats: DashboardStats(
-        pendingApplications: pendingApps,
-        activeFarmers: 0,
-        pendingProducts: pendingProds,
-        activeProducts: activeProds,
-        suspendedFarmers: 0,
-        todayApplications: 0,
-      ),
-      applicationsByDay: [],
-      productsByCategory: [],
-      producersByCity: [],
+        int asInt(dynamic v) => (v as num?)?.toInt() ?? 0;
+
+        return AdminDashboardData(
+          stats: DashboardStats(
+            pendingApplications: asInt(stats['pending_applications']),
+            activeFarmers: asInt(stats['active_farmers']),
+            pendingProducts: asInt(stats['pending_products']),
+            activeProducts: asInt(stats['active_products']),
+            suspendedFarmers: asInt(stats['suspended_farmers']),
+            todayApplications: asInt(stats['today_applications']),
+          ),
+          applicationsByDay: parsePoints(data['applications_by_day']),
+          productsByCategory: parsePoints(data['products_by_category']),
+          producersByCity: parsePoints(data['producers_by_city']),
+        );
+      },
     );
   }
 

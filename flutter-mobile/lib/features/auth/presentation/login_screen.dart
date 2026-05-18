@@ -32,6 +32,18 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
+    // Surface any error already set on the auth service (e.g. account was
+    // suspended at bootstrap and the splash redirected us here). The `ever`
+    // worker below only fires on subsequent changes, so the initial value
+    // would otherwise be silently dropped.
+    final initialError = _auth.errorMessage.value;
+    if (initialError != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.snack(initialError, isError: true);
+        _auth.clearError();
+      });
+    }
     _errorWorker = ever<String?>(_auth.errorMessage, (msg) {
       if (msg != null && mounted) {
         context.snack(msg, isError: true);

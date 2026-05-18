@@ -48,6 +48,22 @@ func (h *Handler) Dashboard(c *fiber.Ctx) error {
 	return response.Success(c, stats, "")
 }
 
+func (h *Handler) CityDensity(c *fiber.Ctx) error {
+	data, err := h.svc.GetCityDensity()
+	if err != nil {
+		return response.Error(c, apperrors.ErrInternal)
+	}
+	return response.Success(c, data, "")
+}
+
+func (h *Handler) InviteNetwork(c *fiber.Ctx) error {
+	data, err := h.svc.GetInviteNetwork()
+	if err != nil {
+		return response.Error(c, apperrors.ErrInternal)
+	}
+	return response.Success(c, data, "")
+}
+
 func (h *Handler) ListApplications(c *fiber.Ctx) error {
 	page, _ := strconv.Atoi(c.Query("page", "1"))
 	limit, _ := strconv.Atoi(c.Query("limit", "20"))
@@ -74,7 +90,9 @@ func (h *Handler) ListApplications(c *fiber.Ctx) error {
 			ORDER BY created_at DESC
 			LIMIT $2 OFFSET $3
 		`, status, limit, (page-1)*limit)
-		h.db.Get(&total, "SELECT COUNT(*) FROM farmer_applications WHERE status = $1", status)
+		if err := h.db.Get(&total, "SELECT COUNT(*) FROM farmer_applications WHERE status = $1", status); err != nil {
+			return response.Error(c, apperrors.ErrInternal)
+		}
 	} else {
 		rows, queryErr = h.db.Queryx(`
 			SELECT id, full_name, phone, business_name, producer_type,
@@ -83,7 +101,9 @@ func (h *Handler) ListApplications(c *fiber.Ctx) error {
 			ORDER BY created_at DESC
 			LIMIT $1 OFFSET $2
 		`, limit, (page-1)*limit)
-		h.db.Get(&total, "SELECT COUNT(*) FROM farmer_applications")
+		if err := h.db.Get(&total, "SELECT COUNT(*) FROM farmer_applications"); err != nil {
+			return response.Error(c, apperrors.ErrInternal)
+		}
 	}
 	if queryErr != nil {
 		return response.Error(c, apperrors.ErrInternal)
@@ -121,10 +141,15 @@ func (h *Handler) GetApplication(c *fiber.Ctx) error {
 
 func (h *Handler) ApproveApplication(c *fiber.Ctx) error {
 	id := c.Params("id")
-	adminID := c.Locals(middleware.UserIDKey).(string)
+	adminID, _ := c.Locals(middleware.UserIDKey).(string)
+	if adminID == "" {
+		return response.Unauthorized(c, "Kimlik doğrulama gerekli")
+	}
 
 	var req ApproveApplicationRequest
-	c.BodyParser(&req)
+	if err := c.BodyParser(&req); err != nil {
+		return response.BadRequest(c, "Geçersiz istek gövdesi")
+	}
 
 	result, err := h.svc.ApproveApplication(id, adminID, &req)
 	if err != nil {
@@ -138,7 +163,10 @@ func (h *Handler) ApproveApplication(c *fiber.Ctx) error {
 
 func (h *Handler) RejectApplication(c *fiber.Ctx) error {
 	id := c.Params("id")
-	adminID := c.Locals(middleware.UserIDKey).(string)
+	adminID, _ := c.Locals(middleware.UserIDKey).(string)
+	if adminID == "" {
+		return response.Unauthorized(c, "Kimlik doğrulama gerekli")
+	}
 
 	var req RejectApplicationRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -158,20 +186,31 @@ func (h *Handler) RejectApplication(c *fiber.Ctx) error {
 		return response.NotFound(c, "Başvuru bulunamadı")
 	}
 
-	_, err := h.db.Exec(`
+	tx, err := h.db.Beginx()
+	if err != nil {
+		return response.Error(c, apperrors.ErrInternal)
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.Exec(`
 		UPDATE farmer_applications
 		SET status = 'rejected', reviewed_by = $1, reviewed_at = NOW(),
 		    admin_note = $2, rejection_reason = $3, updated_at = NOW()
 		WHERE id = $4
-	`, adminID, req.AdminNote, req.RejectionReason, id)
-	if err != nil {
+	`, adminID, req.AdminNote, req.RejectionReason, id); err != nil {
 		return response.Error(c, apperrors.ErrInternal)
 	}
 
-	h.db.Exec(`
+	if _, err := tx.Exec(`
 		UPDATE invitations SET status = 'rejected', updated_at = NOW()
 		WHERE application_id = $1
-	`, id)
+	`, id); err != nil {
+		return response.Error(c, apperrors.ErrInternal)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return response.Error(c, apperrors.ErrInternal)
+	}
 
 	go h.notifSvc.ApplicationRejected(id, app.FullName, app.Phone, req.RejectionReason)
 
@@ -180,9 +219,12 @@ func (h *Handler) RejectApplication(c *fiber.Ctx) error {
 
 func (h *Handler) RequestVideo(c *fiber.Ctx) error {
 	id := c.Params("id")
-	adminID := c.Locals(middleware.UserIDKey).(string)
+	adminID, _ := c.Locals(middleware.UserIDKey).(string)
+	if adminID == "" {
+		return response.Unauthorized(c, "Kimlik doğrulama gerekli")
+	}
 
-	_, err := h.db.Exec(`
+	res, err := h.db.Exec(`
 		UPDATE farmer_applications
 		SET status = 'needs_video', reviewed_by = $1,
 		    application_video_status = 'requested',
@@ -191,6 +233,10 @@ func (h *Handler) RequestVideo(c *fiber.Ctx) error {
 	`, adminID, id)
 	if err != nil {
 		return response.Error(c, apperrors.ErrInternal)
+	}
+	rows, _ := res.RowsAffected()
+	if rows == 0 {
+		return response.Conflict(c, "Sadece bekleyen başvurular için video talep edilebilir")
 	}
 
 	return response.Success(c, nil, "Video talep edildi")

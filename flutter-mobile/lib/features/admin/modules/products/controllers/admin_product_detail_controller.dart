@@ -19,6 +19,11 @@ class AdminProductDetailController extends GetxController {
     load();
   }
 
+  @override
+  void onClose() {
+    super.onClose();
+  }
+
   Future<void> load() async {
     isLoading.value = true;
     error.value = '';
