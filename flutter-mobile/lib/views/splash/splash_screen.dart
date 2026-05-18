@@ -39,6 +39,9 @@ class _SplashScreenState extends State<SplashScreen> {
       case AuthStatus.admin:
         context.go('/admin');
         break;
+      case AuthStatus.customerActive:
+        context.go('/');
+        break;
       case AuthStatus.farmerSuspended:
       case AuthStatus.loggedOut:
       case AuthStatus.unknown:

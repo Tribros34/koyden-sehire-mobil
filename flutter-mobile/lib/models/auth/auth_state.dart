@@ -1,4 +1,11 @@
-enum AuthStatus { unknown, loggedOut, farmerActive, farmerSuspended, admin }
+enum AuthStatus {
+  unknown,
+  loggedOut,
+  farmerActive,
+  farmerSuspended,
+  customerActive,
+  admin,
+}
 
 class AuthState {
   final AuthStatus status;

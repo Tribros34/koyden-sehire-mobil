@@ -3,7 +3,7 @@ class UserModel {
   final String fullName;
   final String phone;
   final String? email;
-  final String role; // 'farmer' | 'admin'
+  final String role; // 'farmer' | 'admin' | 'customer'
   final String status; // 'active' | 'suspended'
 
   const UserModel({
@@ -17,6 +17,7 @@ class UserModel {
 
   bool get isFarmer => role == 'farmer';
   bool get isAdmin => role == 'admin';
+  bool get isCustomer => role == 'customer';
   bool get isActive => status == 'active';
 
   factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(

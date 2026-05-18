@@ -52,7 +52,15 @@
       "Bash(docker info *)",
       "Bash(taskkill /IM \"Docker Desktop.exe\" /F)",
       "Bash(start \"\" \"C:\\\\Program Files\\\\Docker\\\\Docker\\\\Docker Desktop.exe\")",
-      "Bash(break)"
+      "Bash(break)",
+      "Bash(flutter run *)",
+      "Bash(flutter clean *)",
+      "Bash(wait)",
+      "Read(//c/Users/FURKAN~1/AppData/Local/Temp/claude/C--Projeler-koyden-sehire-mobil/4faa403c-65ca-48a1-90f8-442e07ce1166/tasks/**)",
+      "Bash(docker compose *)",
+      "Bash(docker exec koyden-sehire-mobil-postgres-1 *)",
+      "Bash(docker exec koyden-sehire-mobil-redis-1 *)",
+      "Bash(docker exec koyden-sehire-mobil-api-1 *)"
     ]
   }
 }

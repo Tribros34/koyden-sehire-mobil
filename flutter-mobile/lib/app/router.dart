@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide Trans;
 import 'package:go_router/go_router.dart';
@@ -14,7 +15,10 @@ import 'package:koyden_sehire/views/admin/admin_map_view.dart';
 import 'package:koyden_sehire/views/admin/admin_product_detail_view.dart';
 import 'package:koyden_sehire/views/admin/admin_products_view.dart';
 import 'package:koyden_sehire/views/admin/widgets/admin_shell.dart';
+import 'package:koyden_sehire/views/auth/admin_login_screen.dart';
+import 'package:koyden_sehire/views/auth/customer_register_screen.dart';
 import 'package:koyden_sehire/views/auth/login_screen.dart';
+import 'package:koyden_sehire/views/auth/register_choice_screen.dart';
 import 'package:koyden_sehire/models/auth/auth_state.dart';
 import 'package:koyden_sehire/views/farmer_application/application_form_screen.dart';
 import 'package:koyden_sehire/views/farmer_application/application_success_screen.dart';
@@ -31,6 +35,8 @@ import 'package:koyden_sehire/views/public/product_detail_screen.dart';
 import 'package:koyden_sehire/views/public/product_list_screen.dart';
 import 'package:koyden_sehire/views/splash/splash_screen.dart';
 
+// Public routes are accessible to logged-out users AND to logged-in
+// customers (customers can keep browsing the marketplace).
 const _publicRoutes = {
   '/',
   '/products',
@@ -39,6 +45,8 @@ const _publicRoutes = {
   '/apply/form',
   '/apply/success',
   '/login',
+  '/register',
+  '/register/customer',
   '/otp',
 };
 
@@ -90,7 +98,27 @@ class AppRouter {
         }
 
         if (auth.status.value == AuthStatus.farmerActive) {
-          if (loc == '/login') return '/farmer/dashboard';
+          if (loc == '/login' ||
+              loc == '/login/admin' ||
+              loc.startsWith('/register')) {
+            return '/farmer/dashboard';
+          }
+          return null;
+        }
+
+        if (auth.status.value == AuthStatus.customerActive) {
+          // Customers can browse public marketplace pages, but auth screens
+          // should redirect home.
+          if (loc == '/login' ||
+              loc == '/login/admin' ||
+              loc.startsWith('/register')) {
+            return '/';
+          }
+          if (_isPublic(loc)) return null;
+          // No /customer/* routes yet — fall back to home.
+          if (loc.startsWith('/farmer') || loc.startsWith('/admin')) {
+            return '/';
+          }
           return null;
         }
 
@@ -99,6 +127,9 @@ class AppRouter {
           return '/login';
         }
         if (_isPublic(loc)) return null;
+        // /login/admin is web-only; on mobile the route isn't registered
+        // and the errorBuilder handles it. On web it's a public route.
+        if (kIsWeb && loc == '/login/admin') return null;
         return '/login';
       },
       errorBuilder: (_, state) => Scaffold(
@@ -140,6 +171,21 @@ class AppRouter {
         GoRoute(
           path: '/login',
           builder: (_, __) => const LoginScreen(),
+        ),
+        // Admin login is web-only. On mobile we don't register the route so
+        // direct navigation falls through to the global 404.
+        if (kIsWeb)
+          GoRoute(
+            path: '/login/admin',
+            builder: (_, __) => const AdminLoginScreen(),
+          ),
+        GoRoute(
+          path: '/register',
+          builder: (_, __) => const RegisterChoiceScreen(),
+        ),
+        GoRoute(
+          path: '/register/customer',
+          builder: (_, __) => const CustomerRegisterScreen(),
         ),
         GoRoute(
           path: '/admin',

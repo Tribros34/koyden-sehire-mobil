@@ -53,8 +53,17 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
       if (s == AuthStatus.farmerActive) {
         context.go('/farmer/dashboard');
+      } else if (s == AuthStatus.customerActive) {
+        context.go('/');
       } else if (s == AuthStatus.admin) {
-        context.go('/admin');
+        // Admin should NOT log in from the public /login screen. Surface an
+        // error and force logout — admins must use /login/admin (web only).
+        _auth.logout();
+        context.snack(
+          'Yönetici hesabıyla giriş yapamazsınız. Lütfen yönetici paneline '
+          'gidin.',
+          isError: true,
+        );
       }
     });
   }
@@ -91,12 +100,12 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 const SizedBox(height: 12),
                 Text(
-                  'Üretici girişi',
+                  'Giriş Yap',
                   style: context.text.headlineMedium,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Onaylanmış üreticiler panelden ürünlerini yönetebilir.',
+                  'Müşteri veya üretici hesabınızla giriş yapın.',
                   style: context.text.bodyMedium?.copyWith(
                     color: AppColors.textSecondary,
                   ),
@@ -136,8 +145,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 24),
                 Center(
                   child: TextButton(
-                    onPressed: () => context.push('/apply'),
-                    child: const Text('Üretici değil misiniz? Başvurun'),
+                    onPressed: () => context.push('/register'),
+                    child: const Text('Hesabın yok mu? Kayıt ol'),
                   ),
                 ),
               ],
