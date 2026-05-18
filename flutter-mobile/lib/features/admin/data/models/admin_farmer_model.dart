@@ -1,0 +1,105 @@
+class AdminFarmer {
+  final String id;
+  final String fullName;
+  final String phone;
+  final String city;
+  final String district;
+  final String status;
+  final bool isFoundingFarmer;
+  final String? inviteCode;
+  final int inviteQuota;
+  final int usedInvites;
+  final double trustScore;
+  final int productCount;
+  final DateTime createdAt;
+
+  const AdminFarmer({
+    required this.id,
+    required this.fullName,
+    required this.phone,
+    required this.city,
+    required this.district,
+    required this.status,
+    required this.isFoundingFarmer,
+    this.inviteCode,
+    required this.inviteQuota,
+    required this.usedInvites,
+    required this.trustScore,
+    required this.productCount,
+    required this.createdAt,
+  });
+
+  bool get isActive => status == 'active';
+  bool get isSuspended => status == 'suspended';
+
+  factory AdminFarmer.fromJson(Map<String, dynamic> json) => AdminFarmer(
+        id: json['id']?.toString() ?? '',
+        fullName: json['full_name']?.toString() ?? json['name']?.toString() ?? '',
+        phone: json['phone']?.toString() ?? '',
+        city: json['city']?.toString() ?? '',
+        district: json['district']?.toString() ?? '',
+        status: json['status']?.toString() ?? 'active',
+        isFoundingFarmer: json['is_founding_farmer'] == true,
+        inviteCode: json['invite_code']?.toString(),
+        inviteQuota: (json['invite_quota'] as num?)?.toInt() ?? 0,
+        usedInvites: (json['used_invites'] as num?)?.toInt() ?? 0,
+        trustScore: (json['trust_score'] as num?)?.toDouble() ?? 0.0,
+        productCount: (json['product_count'] as num?)?.toInt() ?? 0,
+        createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ??
+            DateTime.now(),
+      );
+}
+
+class AdminFarmerDetail extends AdminFarmer {
+  final double profileCompletion;
+  final bool hasVideoVerification;
+  final int approvedProducts;
+  final int complaints;
+  final int inviteHistory;
+
+  const AdminFarmerDetail({
+    required super.id,
+    required super.fullName,
+    required super.phone,
+    required super.city,
+    required super.district,
+    required super.status,
+    required super.isFoundingFarmer,
+    super.inviteCode,
+    required super.inviteQuota,
+    required super.usedInvites,
+    required super.trustScore,
+    required super.productCount,
+    required super.createdAt,
+    required this.profileCompletion,
+    required this.hasVideoVerification,
+    required this.approvedProducts,
+    required this.complaints,
+    required this.inviteHistory,
+  });
+
+  factory AdminFarmerDetail.fromJson(Map<String, dynamic> json) {
+    final base = AdminFarmer.fromJson(json);
+    return AdminFarmerDetail(
+      id: base.id,
+      fullName: base.fullName,
+      phone: base.phone,
+      city: base.city,
+      district: base.district,
+      status: base.status,
+      isFoundingFarmer: base.isFoundingFarmer,
+      inviteCode: base.inviteCode,
+      inviteQuota: base.inviteQuota,
+      usedInvites: base.usedInvites,
+      trustScore: base.trustScore,
+      productCount: base.productCount,
+      createdAt: base.createdAt,
+      profileCompletion:
+          (json['profile_completion'] as num?)?.toDouble() ?? 0.0,
+      hasVideoVerification: json['has_video_verification'] == true,
+      approvedProducts: (json['approved_products'] as num?)?.toInt() ?? 0,
+      complaints: (json['complaints'] as num?)?.toInt() ?? 0,
+      inviteHistory: (json['invite_history'] as num?)?.toInt() ?? 0,
+    );
+  }
+}

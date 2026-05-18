@@ -1,70 +1,44 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 
 import '../../../../core/errors/app_exception.dart';
 import '../data/farmer_product_repository.dart';
 import '../models/farmer_product_model.dart';
 
-class ProductFormState {
-  final ProductFormData data;
-  final bool isSubmitting;
-  final bool isUploadingImage;
-  final String? errorMessage;
-  final bool saved;
-
-  const ProductFormState({
-    this.data = const ProductFormData(),
-    this.isSubmitting = false,
-    this.isUploadingImage = false,
-    this.errorMessage,
-    this.saved = false,
-  });
-
-  ProductFormState copyWith({
-    ProductFormData? data,
-    bool? isSubmitting,
-    bool? isUploadingImage,
-    String? errorMessage,
-    bool? saved,
-    bool clearError = false,
-  }) =>
-      ProductFormState(
-        data: data ?? this.data,
-        isSubmitting: isSubmitting ?? this.isSubmitting,
-        isUploadingImage: isUploadingImage ?? this.isUploadingImage,
-        errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
-        saved: saved ?? this.saved,
-      );
-}
-
-final productFormProvider =
-    StateNotifierProvider.autoDispose<ProductFormController, ProductFormState>(
-        (ref) {
-  return ProductFormController(ref.watch(farmerProductRepositoryProvider));
-});
-
-class ProductFormController extends StateNotifier<ProductFormState> {
+class ProductFormController extends GetxController {
   final FarmerProductRepository _repo;
-  ProductFormController(this._repo) : super(const ProductFormState());
+  ProductFormController(this._repo);
+
+  final Rx<ProductFormData> data = const ProductFormData().obs;
+  final RxBool isSubmitting = false.obs;
+  final RxBool isUploadingImage = false.obs;
+  final RxnString errorMessage = RxnString();
+  final RxBool saved = false.obs;
 
   void hydrate(FarmerProductModel m) {
-    state = state.copyWith(
-      data: ProductFormData(
-        title: m.title,
-        description: m.description,
-        price: m.price.toString(),
-        unit: m.unit,
-        city: m.city,
-        district: m.district,
-        village: m.village,
-        categoryId: m.categoryId,
-        stockStatus: m.stockStatus,
-        imageUrls: m.imageUrls,
-      ),
+    data.value = ProductFormData(
+      title: m.title,
+      description: m.description,
+      price: m.price.toString(),
+      unit: m.unit,
+      city: m.city,
+      district: m.district,
+      village: m.village,
+      categoryId: m.categoryId,
+      stockStatus: m.stockStatus,
+      imageUrls: m.imageUrls,
     );
   }
 
-  void update(ProductFormData Function(ProductFormData) updater) {
-    state = state.copyWith(data: updater(state.data));
+  void patch(ProductFormData Function(ProductFormData) updater) {
+    data.value = updater(data.value);
+  }
+
+  void reset() {
+    data.value = const ProductFormData();
+    isSubmitting.value = false;
+    isUploadingImage.value = false;
+    errorMessage.value = null;
+    saved.value = false;
   }
 
   Future<bool> uploadImage(
@@ -72,55 +46,52 @@ class ProductFormController extends StateNotifier<ProductFormState> {
     String filename = 'photo.jpg',
     String contentType = 'image/jpeg',
   }) async {
-    state = state.copyWith(isUploadingImage: true, clearError: true);
+    isUploadingImage.value = true;
+    errorMessage.value = null;
     try {
       final url = await _repo.uploadProductImage(
         bytes,
         filename: filename,
         contentType: contentType,
       );
-      final next = [...state.data.imageUrls, url];
-      state = state.copyWith(
-        isUploadingImage: false,
-        data: state.data.copyWith(imageUrls: next),
-      );
+      data.value =
+          data.value.copyWith(imageUrls: [...data.value.imageUrls, url]);
       return true;
     } on AppException catch (e) {
-      state = state.copyWith(isUploadingImage: false, errorMessage: e.message);
+      errorMessage.value = e.message;
       return false;
     } catch (_) {
-      state = state.copyWith(
-        isUploadingImage: false,
-        errorMessage: 'Görsel yüklenemedi',
-      );
+      errorMessage.value = 'Görsel yüklenemedi';
       return false;
+    } finally {
+      isUploadingImage.value = false;
     }
   }
 
   void removeImage(int index) {
-    final list = [...state.data.imageUrls]..removeAt(index);
-    state = state.copyWith(data: state.data.copyWith(imageUrls: list));
+    final list = [...data.value.imageUrls]..removeAt(index);
+    data.value = data.value.copyWith(imageUrls: list);
   }
 
   Future<bool> submit({String? editingId}) async {
-    state = state.copyWith(isSubmitting: true, clearError: true);
+    isSubmitting.value = true;
+    errorMessage.value = null;
     try {
       if (editingId == null) {
-        await _repo.create(state.data);
+        await _repo.create(data.value);
       } else {
-        await _repo.update(editingId, state.data);
+        await _repo.update(editingId, data.value);
       }
-      state = state.copyWith(isSubmitting: false, saved: true);
+      saved.value = true;
       return true;
     } on AppException catch (e) {
-      state = state.copyWith(isSubmitting: false, errorMessage: e.message);
+      errorMessage.value = e.message;
       return false;
     } catch (_) {
-      state = state.copyWith(
-        isSubmitting: false,
-        errorMessage: 'Kaydedilemedi',
-      );
+      errorMessage.value = 'Kaydedilemedi';
       return false;
+    } finally {
+      isSubmitting.value = false;
     }
   }
 }

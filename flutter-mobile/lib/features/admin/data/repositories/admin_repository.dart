@@ -1,15 +1,12 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../../../core/api/api_client.dart';
 import '../../../../core/api/api_endpoints.dart';
 import '../models/admin_application_model.dart';
 import '../models/admin_category_model.dart';
+import '../models/admin_city_density_model.dart';
 import '../models/admin_dashboard_model.dart';
+import '../models/admin_farmer_model.dart';
+import '../models/admin_invite_network_model.dart';
 import '../models/admin_product_model.dart';
-
-final adminRepositoryProvider = Provider<AdminRepository>(
-  (ref) => AdminRepository(ref.watch(apiClientProvider)),
-);
 
 class AdminRepository {
   final ApiClient _client;
@@ -131,6 +128,67 @@ class AdminRepository {
       ApiEndpoints.adminProductAction(id, action),
       data: body,
       parse: (_) {},
+    );
+  }
+
+  Future<List<AdminFarmer>> getFarmers({String? status}) async {
+    return _client.get<List<AdminFarmer>>(
+      ApiEndpoints.adminFarmers,
+      query: {
+        if (status != null) 'status': status,
+        'limit': 100,
+      },
+      parse: (d) {
+        final list = (d['data'] ?? d) as List?;
+        return (list ?? [])
+            .map((e) =>
+                AdminFarmer.fromJson((e as Map).cast<String, dynamic>()))
+            .toList();
+      },
+    );
+  }
+
+  Future<AdminFarmerDetail> getFarmer(String id) async {
+    return _client.get<AdminFarmerDetail>(
+      ApiEndpoints.adminFarmer(id),
+      parse: (d) => AdminFarmerDetail.fromJson(
+          (d['data'] as Map).cast<String, dynamic>()),
+    );
+  }
+
+  Future<void> toggleFarmerStatus(String id, String action) async {
+    final endpoint = action == 'suspend'
+        ? ApiEndpoints.adminFarmerSuspend(id)
+        : ApiEndpoints.adminFarmerActivate(id);
+    await _client.post<void>(endpoint, parse: (_) {});
+  }
+
+  Future<void> updateFarmerQuota(String id, int quota) async {
+    await _client.patch<void>(
+      ApiEndpoints.adminFarmer(id),
+      data: {'invite_quota': quota},
+      parse: (_) {},
+    );
+  }
+
+  Future<List<CityDensity>> getCityDensity() async {
+    return _client.get<List<CityDensity>>(
+      ApiEndpoints.adminCityDensity,
+      parse: (d) {
+        final list = (d['data'] ?? d) as List?;
+        return (list ?? [])
+            .map((e) =>
+                CityDensity.fromJson((e as Map).cast<String, dynamic>()))
+            .toList();
+      },
+    );
+  }
+
+  Future<InviteNode> getInviteNetwork() async {
+    return _client.get<InviteNode>(
+      ApiEndpoints.adminInviteNetwork,
+      parse: (d) => InviteNode.fromJson(
+          ((d['data'] ?? d) as Map).cast<String, dynamic>()),
     );
   }
 

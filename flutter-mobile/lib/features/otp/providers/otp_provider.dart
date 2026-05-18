@@ -1,81 +1,51 @@
 import 'dart:async';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 
 import '../../../app/constants.dart';
 import '../../../core/errors/app_exception.dart';
 import '../data/otp_repository.dart';
 
-class OtpState {
-  final bool isSending;
-  final bool isVerifying;
-  final String? errorMessage;
-  final int cooldownSeconds;
-  final bool verified;
-
-  const OtpState({
-    this.isSending = false,
-    this.isVerifying = false,
-    this.errorMessage,
-    this.cooldownSeconds = 0,
-    this.verified = false,
-  });
-
-  OtpState copyWith({
-    bool? isSending,
-    bool? isVerifying,
-    String? errorMessage,
-    int? cooldownSeconds,
-    bool? verified,
-    bool clearError = false,
-  }) =>
-      OtpState(
-        isSending: isSending ?? this.isSending,
-        isVerifying: isVerifying ?? this.isVerifying,
-        errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
-        cooldownSeconds: cooldownSeconds ?? this.cooldownSeconds,
-        verified: verified ?? this.verified,
-      );
-}
-
-final otpControllerProvider =
-    StateNotifierProvider.autoDispose<OtpController, OtpState>((ref) {
-  return OtpController(ref.watch(otpRepositoryProvider));
-});
-
-class OtpController extends StateNotifier<OtpState> {
+class OtpController extends GetxController {
   final OtpRepository _repo;
+  OtpController(this._repo);
+
+  final RxBool isSending = false.obs;
+  final RxBool isVerifying = false.obs;
+  final RxnString errorMessage = RxnString();
+  final RxInt cooldownSeconds = 0.obs;
+  final RxBool verified = false.obs;
+
   Timer? _timer;
 
-  OtpController(this._repo) : super(const OtpState());
-
   @override
-  void dispose() {
+  void onClose() {
     _timer?.cancel();
-    super.dispose();
+    super.onClose();
   }
 
   void _startCooldown() {
     _timer?.cancel();
-    state = state.copyWith(cooldownSeconds: AppConstants.otpResendCooldownSeconds);
+    cooldownSeconds.value = AppConstants.otpResendCooldownSeconds;
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
-      final next = state.cooldownSeconds - 1;
+      final next = cooldownSeconds.value - 1;
       if (next <= 0) {
         t.cancel();
-        state = state.copyWith(cooldownSeconds: 0);
+        cooldownSeconds.value = 0;
       } else {
-        state = state.copyWith(cooldownSeconds: next);
+        cooldownSeconds.value = next;
       }
     });
   }
 
   Future<bool> send(String phone) async {
-    if (state.cooldownSeconds > 0) return false;
-    state = state.copyWith(isSending: true, clearError: true);
+    if (cooldownSeconds.value > 0) return false;
+    isSending.value = true;
+    errorMessage.value = null;
     try {
       await _repo.send(phone);
       _startCooldown();
-      state = state.copyWith(isSending: false);
+      isSending.value = false;
       return true;
     } on AppException catch (e) {
       String msg = e.message;
@@ -85,22 +55,23 @@ class OtpController extends StateNotifier<OtpState> {
       } else if (e.code == 'INVALID_PHONE') {
         msg = 'Geçersiz telefon numarası';
       }
-      state = state.copyWith(isSending: false, errorMessage: msg);
+      errorMessage.value = msg;
+      isSending.value = false;
       return false;
     } catch (_) {
-      state = state.copyWith(
-        isSending: false,
-        errorMessage: 'Kod gönderilemedi',
-      );
+      errorMessage.value = 'Kod gönderilemedi';
+      isSending.value = false;
       return false;
     }
   }
 
   Future<bool> verify({required String phone, required String code}) async {
-    state = state.copyWith(isVerifying: true, clearError: true);
+    isVerifying.value = true;
+    errorMessage.value = null;
     try {
       await _repo.verify(phone: phone, code: code);
-      state = state.copyWith(isVerifying: false, verified: true);
+      isVerifying.value = false;
+      verified.value = true;
       return true;
     } on AppException catch (e) {
       String msg = e.message;
@@ -111,13 +82,12 @@ class OtpController extends StateNotifier<OtpState> {
       } else if (e.code == 'MAX_ATTEMPTS') {
         msg = 'Çok fazla yanlış deneme. Yeni kod isteyin.';
       }
-      state = state.copyWith(isVerifying: false, errorMessage: msg);
+      errorMessage.value = msg;
+      isVerifying.value = false;
       return false;
     } catch (_) {
-      state = state.copyWith(
-        isVerifying: false,
-        errorMessage: 'Doğrulama başarısız',
-      );
+      errorMessage.value = 'Doğrulama başarısız';
+      isVerifying.value = false;
       return false;
     }
   }

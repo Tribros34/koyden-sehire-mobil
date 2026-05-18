@@ -1,13 +1,7 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../../../core/api/api_client.dart';
 import '../../../../core/api/api_endpoints.dart';
 import '../../products/models/product_model.dart';
 import '../models/farmer_model.dart';
-
-final farmerRepositoryProvider = Provider<FarmerRepository>((ref) {
-  return FarmerRepository(ref.watch(apiClientProvider));
-});
 
 class FarmerRepository {
   final ApiClient _api;

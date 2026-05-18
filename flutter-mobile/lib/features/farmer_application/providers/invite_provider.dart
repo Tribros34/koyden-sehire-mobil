@@ -1,53 +1,25 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 
 import '../../../core/errors/app_exception.dart';
 import '../data/application_repository.dart';
 import '../models/application_model.dart';
 
-class InviteValidationState {
-  final bool isLoading;
-  final InviteInfo? info;
-  final String? errorMessage;
-
-  const InviteValidationState({
-    this.isLoading = false,
-    this.info,
-    this.errorMessage,
-  });
-
-  InviteValidationState copyWith({
-    bool? isLoading,
-    InviteInfo? info,
-    String? errorMessage,
-    bool clearError = false,
-    bool clearInfo = false,
-  }) =>
-      InviteValidationState(
-        isLoading: isLoading ?? this.isLoading,
-        info: clearInfo ? null : (info ?? this.info),
-        errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
-      );
-}
-
-final inviteValidationProvider = StateNotifierProvider.autoDispose<
-    InviteValidationController, InviteValidationState>((ref) {
-  return InviteValidationController(ref.watch(applicationRepositoryProvider));
-});
-
-class InviteValidationController
-    extends StateNotifier<InviteValidationState> {
+class InviteValidationController extends GetxController {
   final ApplicationRepository _repo;
-  InviteValidationController(this._repo) : super(const InviteValidationState());
+  InviteValidationController(this._repo);
+
+  final RxBool isLoading = false.obs;
+  final Rxn<InviteInfo> info = Rxn<InviteInfo>();
+  final RxnString errorMessage = RxnString();
 
   Future<bool> validate(String code) async {
-    state = state.copyWith(
-      isLoading: true,
-      clearError: true,
-      clearInfo: true,
-    );
+    isLoading.value = true;
+    errorMessage.value = null;
+    info.value = null;
     try {
-      final info = await _repo.validateInvite(code);
-      state = state.copyWith(isLoading: false, info: info);
+      final res = await _repo.validateInvite(code);
+      info.value = res;
+      isLoading.value = false;
       return true;
     } on AppException catch (e) {
       String msg;
@@ -61,12 +33,15 @@ class InviteValidationController
         default:
           msg = e.message;
       }
-      state = state.copyWith(isLoading: false, errorMessage: msg);
+      errorMessage.value = msg;
+      isLoading.value = false;
       return false;
     }
   }
 
   void reset() {
-    state = const InviteValidationState();
+    isLoading.value = false;
+    info.value = null;
+    errorMessage.value = null;
   }
 }

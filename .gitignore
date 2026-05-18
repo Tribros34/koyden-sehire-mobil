@@ -1,6 +1,8 @@
 # Environment — gerçek credentials burada, commit etme
 .env
 
+.claude/
+
 # Go binary (compiled output at repo root)
 /api
 *.exe

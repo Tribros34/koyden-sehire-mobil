@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../providers/application_provider.dart';
 
-class ApplicationSuccessScreen extends ConsumerWidget {
+class ApplicationSuccessScreen extends StatelessWidget {
   const ApplicationSuccessScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
       child: Scaffold(
@@ -63,7 +63,7 @@ class ApplicationSuccessScreen extends ConsumerWidget {
                 AppButton(
                   label: 'Ana Sayfaya Dön',
                   onPressed: () {
-                    ref.read(applicationFormProvider.notifier).reset();
+                    Get.find<ApplicationFormController>().reset();
                     context.go('/');
                   },
                 ),

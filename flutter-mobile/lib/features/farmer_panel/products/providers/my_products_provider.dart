@@ -1,64 +1,39 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 
 import '../../../../core/errors/app_exception.dart';
 import '../data/farmer_product_repository.dart';
 import '../models/farmer_product_model.dart';
 
-class MyProductsState {
-  final List<FarmerProductModel> items;
-  final bool isLoading;
-  final String? errorMessage;
-  final String? statusFilter;
-
-  const MyProductsState({
-    this.items = const [],
-    this.isLoading = false,
-    this.errorMessage,
-    this.statusFilter,
-  });
-
-  MyProductsState copyWith({
-    List<FarmerProductModel>? items,
-    bool? isLoading,
-    String? errorMessage,
-    String? statusFilter,
-    bool clearError = false,
-    bool clearStatus = false,
-  }) =>
-      MyProductsState(
-        items: items ?? this.items,
-        isLoading: isLoading ?? this.isLoading,
-        errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
-        statusFilter: clearStatus ? null : (statusFilter ?? this.statusFilter),
-      );
-}
-
-final myProductsProvider =
-    StateNotifierProvider<MyProductsController, MyProductsState>((ref) {
-  return MyProductsController(ref.watch(farmerProductRepositoryProvider));
-});
-
-class MyProductsController extends StateNotifier<MyProductsState> {
+class MyProductsController extends GetxController {
   final FarmerProductRepository _repo;
-  MyProductsController(this._repo) : super(const MyProductsState()) {
+  MyProductsController(this._repo);
+
+  final RxList<FarmerProductModel> items = <FarmerProductModel>[].obs;
+  final RxBool isLoading = false.obs;
+  final RxnString errorMessage = RxnString();
+  final RxnString statusFilter = RxnString();
+
+  @override
+  void onInit() {
+    super.onInit();
     refresh();
   }
 
   Future<void> setStatus(String? status) async {
-    state = state.copyWith(
-      statusFilter: status,
-      clearStatus: status == null,
-    );
+    statusFilter.value = status;
     await refresh();
   }
 
   Future<void> refresh() async {
-    state = state.copyWith(isLoading: true, clearError: true);
+    isLoading.value = true;
+    errorMessage.value = null;
     try {
-      final items = await _repo.list(status: state.statusFilter);
-      state = state.copyWith(items: items, isLoading: false);
+      final res = await _repo.list(status: statusFilter.value);
+      items.assignAll(res);
     } on AppException catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.message);
+      errorMessage.value = e.message;
+    } finally {
+      isLoading.value = false;
     }
   }
 
@@ -68,7 +43,7 @@ class MyProductsController extends StateNotifier<MyProductsState> {
       await refresh();
       return true;
     } on AppException catch (e) {
-      state = state.copyWith(errorMessage: e.message);
+      errorMessage.value = e.message;
       return false;
     }
   }

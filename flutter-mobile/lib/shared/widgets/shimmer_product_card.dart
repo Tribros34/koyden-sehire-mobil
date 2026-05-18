@@ -49,14 +49,16 @@ class ShimmerList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.separated(
+    return GridView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: count,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
-      itemBuilder: (_, __) => const SizedBox(
-        height: 110,
-        child: ShimmerProductCard(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 0.62,
       ),
+      itemCount: count,
+      itemBuilder: (_, __) => const ShimmerProductCard(),
     );
   }
 }

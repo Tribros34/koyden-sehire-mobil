@@ -18,7 +18,26 @@
       "Read(//tmp/**)",
       "Bash(cp /tmp/router.dart /c/Projeler/koyden-sehire-mobil/flutter/lib/app/router.dart)",
       "Bash(cp /tmp/api_endpoints.dart /c/Projeler/koyden-sehire-mobil/flutter/lib/core/api/api_endpoints.dart)",
-      "Bash(cp /tmp/pubspec.yaml /c/Projeler/koyden-sehire-mobil/flutter/pubspec.yaml)"
+      "Bash(cp /tmp/pubspec.yaml /c/Projeler/koyden-sehire-mobil/flutter/pubspec.yaml)",
+      "Bash(flutter pub *)",
+      "Bash(cp *)",
+      "PowerShell(Get-Process *)",
+      "Bash(git add *)",
+      "Bash(flutter create *)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(flutter analyze *)",
+      "Bash(head -235 /c/Projeler/koyden-sehire-mobil/flutter-mobile/lib/app/router.dart)",
+      "Bash(mv /tmp/router_clean.dart /c/Projeler/koyden-sehire-mobil/flutter-mobile/lib/app/router.dart)",
+      "Bash(xargs grep -l \"WidgetRef\\\\|adminRepositoryProvider\")",
+      "Bash(head -54 /c/Projeler/koyden-sehire-mobil/flutter-mobile/lib/core/api/api_endpoints.dart)",
+      "Bash(mv /tmp/endpoints_clean.dart /c/Projeler/koyden-sehire-mobil/flutter-mobile/lib/core/api/api_endpoints.dart)",
+      "Bash(grep -oP \"lib\\\\\\\\\\\\\\\\[^:]*\")",
+      "Bash(dart analyze *)",
+      "Bash(xargs grep -l \"GetxController\\\\|GetxService\")",
+      "Bash(Get-ChildItem -Path \"C:\\\\Projeler\\\\koyden-sehire-mobil\" -Recurse -Directory)",
+      "Bash(Select-Object FullName)",
+      "Bash(Get-ChildItem \"C:\\\\Projeler\\\\koyden-sehire-mobil\\\\go-backend\" -Recurse -Filter \"*.go\")",
+      "Bash(Select-Object -First 20)"
     ]
   }
 }

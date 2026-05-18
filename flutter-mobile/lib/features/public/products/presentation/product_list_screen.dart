@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 
 import '../../../../app/theme.dart';
 import '../../../../shared/widgets/app_empty_widget.dart';
@@ -12,7 +12,7 @@ import '../../categories/providers/category_provider.dart';
 import '../models/product_model.dart';
 import '../providers/product_list_provider.dart';
 
-class ProductListScreen extends ConsumerStatefulWidget {
+class ProductListScreen extends StatefulWidget {
   final String? initialCategoryId;
   final String? initialSearch;
 
@@ -23,12 +23,15 @@ class ProductListScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<ProductListScreen> createState() => _ProductListScreenState();
+  State<ProductListScreen> createState() => _ProductListScreenState();
 }
 
-class _ProductListScreenState extends ConsumerState<ProductListScreen> {
+class _ProductListScreenState extends State<ProductListScreen> {
   final _scrollController = ScrollController();
   final _searchController = TextEditingController();
+
+  ProductListController get _ctrl => Get.find<ProductListController>();
+  CategoryController get _catCtrl => Get.find<CategoryController>();
 
   @override
   void initState() {
@@ -36,12 +39,12 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
     _searchController.text = widget.initialSearch ?? '';
     _scrollController.addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(productListProvider.notifier).applyFilter(
-            ProductFilter(
-              search: widget.initialSearch,
-              categoryId: widget.initialCategoryId,
-            ),
-          );
+      _ctrl.applyFilter(
+        ProductFilter(
+          search: widget.initialSearch,
+          categoryId: widget.initialCategoryId,
+        ),
+      );
     });
   }
 
@@ -56,12 +59,12 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
   void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
-      ref.read(productListProvider.notifier).loadMore();
+      _ctrl.loadMore();
     }
   }
 
   void _showSortSheet() {
-    final current = ref.read(productListProvider).filter.sort;
+    final current = _ctrl.filter.value.sort;
     showModalBottomSheet<String>(
       context: context,
       builder: (_) => SafeArea(
@@ -71,7 +74,8 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
             const Padding(
               padding: EdgeInsets.all(16),
               child: Text('Sıralama',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+                  style: TextStyle(
+                      fontWeight: FontWeight.w600, fontSize: 16)),
             ),
             _SortTile(
               label: 'En Yeni',
@@ -97,38 +101,35 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
       ),
     ).then((value) {
       if (value == null) return;
-      final filter = ref.read(productListProvider).filter;
-      ref.read(productListProvider.notifier).applyFilter(
-            value == '__newest__'
-                ? filter.copyWith(clearSort: true)
-                : filter.copyWith(sort: value),
-          );
+      final filter = _ctrl.filter.value;
+      _ctrl.applyFilter(
+        value == '__newest__'
+            ? filter.copyWith(clearSort: true)
+            : filter.copyWith(sort: value),
+      );
     });
   }
 
   void _onSearchSubmitted(String value) {
-    final filter = ref.read(productListProvider).filter;
-    ref.read(productListProvider.notifier).applyFilter(
-          value.trim().isEmpty
-              ? filter.copyWith(clearSearch: true)
-              : filter.copyWith(search: value.trim()),
-        );
+    final filter = _ctrl.filter.value;
+    _ctrl.applyFilter(
+      value.trim().isEmpty
+          ? filter.copyWith(clearSearch: true)
+          : filter.copyWith(search: value.trim()),
+    );
   }
 
   void _selectCategory(String? id) {
-    final filter = ref.read(productListProvider).filter;
-    ref.read(productListProvider.notifier).applyFilter(
-          id == null
-              ? filter.copyWith(clearCategory: true)
-              : filter.copyWith(categoryId: id),
-        );
+    final filter = _ctrl.filter.value;
+    _ctrl.applyFilter(
+      id == null
+          ? filter.copyWith(clearCategory: true)
+          : filter.copyWith(categoryId: id),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(productListProvider);
-    final categories = ref.watch(categoryTreeProvider);
-
     return Scaffold(
       appBar: AppBar(title: const Text('Ürünler')),
       body: Column(
@@ -154,59 +155,69 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
               ),
             ),
           ),
-          categories.maybeWhen(
-            data: (list) => _CategoryFilterBar(
-              categories: list.where((c) => c.isRoot).toList(),
-              selectedId: state.filter.categoryId,
+          Obx(() {
+            final cats = _catCtrl.categories
+                .where((c) => c.isRoot)
+                .toList();
+            if (cats.isEmpty) return const SizedBox.shrink();
+            return _CategoryFilterBar(
+              categories: cats,
+              selectedId: _ctrl.filter.value.categoryId,
               onSelect: _selectCategory,
-            ),
-            orElse: () => const SizedBox.shrink(),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    state.isLoading
-                        ? 'Yükleniyor...'
-                        : '${state.total} ürün bulundu',
-                    style: const TextStyle(color: AppColors.textSecondary),
+            );
+          }),
+          Obx(() {
+            final ctrl = _ctrl;
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      ctrl.isLoading.value
+                          ? 'Yükleniyor...'
+                          : '${ctrl.total.value} ürün bulundu',
+                      style: const TextStyle(
+                          color: AppColors.textSecondary),
+                    ),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.sort),
-                  tooltip: 'Sıralama',
-                  onPressed: _showSortSheet,
-                ),
-              ],
-            ),
+                  IconButton(
+                    icon: const Icon(Icons.sort),
+                    tooltip: 'Sıralama',
+                    onPressed: _showSortSheet,
+                  ),
+                ],
+              ),
+            );
+          }),
+          Expanded(
+            child: Obx(() => _buildBody()),
           ),
-          Expanded(child: _buildBody(state)),
         ],
       ),
     );
   }
 
-  Widget _buildBody(ProductListState state) {
-    if (state.isLoading && state.items.isEmpty) {
+  Widget _buildBody() {
+    final ctrl = _ctrl;
+    if (ctrl.isLoading.value && ctrl.items.isEmpty) {
       return const ShimmerList();
     }
-    if (state.errorMessage != null && state.items.isEmpty) {
+    if (ctrl.errorMessage.value != null && ctrl.items.isEmpty) {
       return AppErrorWidget(
-        message: state.errorMessage!,
-        onRetry: () => ref.read(productListProvider.notifier).refresh(),
+        message: ctrl.errorMessage.value!,
+        onRetry: ctrl.refresh,
       );
     }
-    if (state.items.isEmpty) {
-      final search = state.filter.search;
+    if (ctrl.items.isEmpty) {
+      final search = ctrl.filter.value.search;
       final emptyMsg = (search?.isNotEmpty ?? false)
           ? '"$search" için sonuç bulunamadı'
           : 'Henüz ürün bulunmuyor';
       return AppEmptyWidget(message: emptyMsg);
     }
     return RefreshIndicator(
-      onRefresh: () => ref.read(productListProvider.notifier).refresh(),
+      onRefresh: ctrl.refresh,
       child: GridView.builder(
         controller: _scrollController,
         padding: const EdgeInsets.all(16),
@@ -216,12 +227,12 @@ class _ProductListScreenState extends ConsumerState<ProductListScreen> {
           crossAxisSpacing: 12,
           childAspectRatio: 0.62,
         ),
-        itemCount: state.items.length + (state.isLoadingMore ? 2 : 0),
+        itemCount: ctrl.items.length + (ctrl.isLoadingMore.value ? 2 : 0),
         itemBuilder: (_, i) {
-          if (i >= state.items.length) {
+          if (i >= ctrl.items.length) {
             return const ShimmerProductCard();
           }
-          return ProductCard(product: state.items[i]);
+          return ProductCard(product: ctrl.items[i]);
         },
       ),
     );

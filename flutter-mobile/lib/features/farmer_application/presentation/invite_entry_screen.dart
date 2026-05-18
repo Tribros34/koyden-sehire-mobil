@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme.dart';
@@ -9,36 +9,43 @@ import '../../../core/utils/validators.dart';
 import '../../../shared/extensions/context_extensions.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_text_field.dart';
+import '../data/application_repository.dart';
 import '../providers/application_provider.dart';
 import '../providers/invite_provider.dart';
 
-class InviteEntryScreen extends ConsumerStatefulWidget {
+class InviteEntryScreen extends StatefulWidget {
   final String? prefillCode;
   const InviteEntryScreen({super.key, this.prefillCode});
 
   @override
-  ConsumerState<InviteEntryScreen> createState() => _InviteEntryScreenState();
+  State<InviteEntryScreen> createState() => _InviteEntryScreenState();
 }
 
-class _InviteEntryScreenState extends ConsumerState<InviteEntryScreen> {
+class _InviteEntryScreenState extends State<InviteEntryScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _codeController;
+  late final InviteValidationController _ctrl;
+  late final ApplicationFormController _formCtrl;
 
   @override
   void initState() {
     super.initState();
     _codeController = TextEditingController(text: widget.prefillCode ?? '');
+    _ctrl = Get.put(InviteValidationController(Get.find<ApplicationRepository>()));
+    _formCtrl = Get.put(
+      ApplicationFormController(Get.find<ApplicationRepository>()),
+      permanent: false,
+    );
     if ((widget.prefillCode ?? '').isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref
-            .read(inviteValidationProvider.notifier)
-            .validate(widget.prefillCode!);
+        _ctrl.validate(widget.prefillCode!);
       });
     }
   }
 
   @override
   void dispose() {
+    Get.delete<InviteValidationController>();
     _codeController.dispose();
     super.dispose();
   }
@@ -46,27 +53,24 @@ class _InviteEntryScreenState extends ConsumerState<InviteEntryScreen> {
   Future<void> _validate() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final code = _codeController.text.trim().toUpperCase();
-    final ok =
-        await ref.read(inviteValidationProvider.notifier).validate(code);
+    final ok = await _ctrl.validate(code);
     if (!mounted) return;
     if (!ok) {
-      final err = ref.read(inviteValidationProvider).errorMessage;
+      final err = _ctrl.errorMessage.value;
       if (err != null) context.snack(err, isError: true);
     }
   }
 
   void _continue() {
-    final info = ref.read(inviteValidationProvider).info;
+    final info = _ctrl.info.value;
     if (info == null) return;
-    ref.read(applicationFormProvider.notifier).reset();
-    ref.read(applicationFormProvider.notifier).setInvite(info);
+    _formCtrl.reset();
+    _formCtrl.setInvite(info);
     context.push('/apply/form');
   }
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(inviteValidationProvider);
-
     return Scaffold(
       appBar: AppBar(title: const Text('Üretici Başvurusu')),
       body: SafeArea(
@@ -79,7 +83,7 @@ class _InviteEntryScreenState extends ConsumerState<InviteEntryScreen> {
               children: [
                 Text('Davet Kodu', style: context.text.headlineMedium),
                 const SizedBox(height: 8),
-                Text(
+                const Text(
                   'Üretici başvuruları davet sistemiyle alınmaktadır. Lütfen size iletilen davet kodunu girin.',
                   style: TextStyle(
                     color: AppColors.textSecondary,
@@ -101,23 +105,29 @@ class _InviteEntryScreenState extends ConsumerState<InviteEntryScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                AppButton(
-                  label: 'Kodu Doğrula',
-                  isLoading: state.isLoading,
-                  onPressed: state.isLoading ? null : _validate,
-                ),
-                if (state.info != null) ...[
-                  const SizedBox(height: 24),
-                  _InviteInfoCard(
-                    inviterName: state.info!.inviterName,
-                    remainingUses: state.info!.remainingUses,
-                  ),
-                  const SizedBox(height: 16),
-                  AppButton(
-                    label: 'Başvuruya Devam Et',
-                    onPressed: _continue,
-                  ),
-                ],
+                Obx(() => AppButton(
+                      label: 'Kodu Doğrula',
+                      isLoading: _ctrl.isLoading.value,
+                      onPressed: _ctrl.isLoading.value ? null : _validate,
+                    )),
+                Obx(() {
+                  final info = _ctrl.info.value;
+                  if (info == null) return const SizedBox.shrink();
+                  return Column(
+                    children: [
+                      const SizedBox(height: 24),
+                      _InviteInfoCard(
+                        inviterName: info.inviterName,
+                        remainingUses: info.remainingUses,
+                      ),
+                      const SizedBox(height: 16),
+                      AppButton(
+                        label: 'Başvuruya Devam Et',
+                        onPressed: _continue,
+                      ),
+                    ],
+                  );
+                }),
               ],
             ),
           ),

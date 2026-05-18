@@ -17,7 +17,6 @@ dependencies:
   go_router: ^14.0.0
 
   # State management
-  flutter_riverpod: ^2.5.0
   get: ^4.6.6
 
   # Charts (admin dashboard)

@@ -1,26 +1,9 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/constants.dart';
 import '../errors/app_exception.dart';
 import '../errors/error_handler.dart';
 import '../storage/secure_storage_service.dart';
-
-final secureStorageProvider = Provider<SecureStorageService>(
-  (_) => SecureStorageService(),
-);
-
-/// Increments each time the API receives a 401. AuthController listens to
-/// this to trigger logout without the interceptor needing a Ref.
-final unauthorizedSignalProvider = StateProvider<int>((_) => 0);
-
-final apiClientProvider = Provider<ApiClient>((ref) {
-  return ApiClient(
-    ref.watch(secureStorageProvider),
-    onUnauthorized: () =>
-        ref.read(unauthorizedSignalProvider.notifier).update((s) => s + 1),
-  );
-});
 
 class ApiClient {
   final SecureStorageService _storage;

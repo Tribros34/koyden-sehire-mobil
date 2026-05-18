@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/constants.dart';
@@ -8,33 +8,40 @@ import '../../../core/utils/phone_formatter.dart';
 import '../../../shared/extensions/context_extensions.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/otp_input.dart';
+import '../data/otp_repository.dart';
 import '../providers/otp_provider.dart';
 
-class OtpScreen extends ConsumerStatefulWidget {
+class OtpScreen extends StatefulWidget {
   final String phone;
   const OtpScreen({super.key, required this.phone});
 
   @override
-  ConsumerState<OtpScreen> createState() => _OtpScreenState();
+  State<OtpScreen> createState() => _OtpScreenState();
 }
 
-class _OtpScreenState extends ConsumerState<OtpScreen> {
+class _OtpScreenState extends State<OtpScreen> {
   String _code = '';
+  late final OtpController _ctrl;
 
   @override
   void initState() {
     super.initState();
-    // Auto-send on first open.
+    // Lazily register the controller for this route.
+    _ctrl = Get.put(OtpController(Get.find<OtpRepository>()));
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(otpControllerProvider.notifier).send(widget.phone);
+      _ctrl.send(widget.phone);
     });
+  }
+
+  @override
+  void dispose() {
+    Get.delete<OtpController>();
+    super.dispose();
   }
 
   Future<void> _verify() async {
     if (_code.length != AppConstants.otpLength) return;
-    final ok = await ref
-        .read(otpControllerProvider.notifier)
-        .verify(phone: widget.phone, code: _code);
+    final ok = await _ctrl.verify(phone: widget.phone, code: _code);
     if (!mounted) return;
     if (ok) {
       // Return verified=true to caller (application form).
@@ -44,7 +51,6 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(otpControllerProvider);
     final masked = PhoneFormatter.mask(widget.phone);
 
     return Scaffold(
@@ -65,36 +71,39 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                 ),
               ),
               const SizedBox(height: 32),
-              OtpInput(
-                length: AppConstants.otpLength,
-                onChanged: (v) => setState(() => _code = v),
-                onCompleted: (_) => _verify(),
-                enabled: !state.isVerifying,
-                errorText: state.errorMessage,
-              ),
+              Obx(() => OtpInput(
+                    length: AppConstants.otpLength,
+                    onChanged: (v) => setState(() => _code = v),
+                    onCompleted: (_) => _verify(),
+                    enabled: !_ctrl.isVerifying.value,
+                    errorText: _ctrl.errorMessage.value,
+                  )),
               const SizedBox(height: 24),
-              AppButton(
-                label: 'Doğrula',
-                isLoading: state.isVerifying,
-                onPressed: _code.length == AppConstants.otpLength
-                    ? _verify
-                    : null,
-              ),
+              Obx(() => AppButton(
+                    label: 'Doğrula',
+                    isLoading: _ctrl.isVerifying.value,
+                    onPressed: _code.length == AppConstants.otpLength
+                        ? _verify
+                        : null,
+                  )),
               const SizedBox(height: 16),
               Center(
-                child: state.cooldownSeconds > 0
-                    ? Text(
-                        'Kodu tekrar gönder (${state.cooldownSeconds})',
-                        style: TextStyle(color: AppColors.textSecondary),
-                      )
-                    : TextButton(
-                        onPressed: state.isSending
-                            ? null
-                            : () => ref
-                                .read(otpControllerProvider.notifier)
-                                .send(widget.phone),
-                        child: const Text('Kodu Tekrar Gönder'),
-                      ),
+                child: Obx(() {
+                  final cooldown = _ctrl.cooldownSeconds.value;
+                  if (cooldown > 0) {
+                    return Text(
+                      'Kodu tekrar gönder ($cooldown)',
+                      style:
+                          const TextStyle(color: AppColors.textSecondary),
+                    );
+                  }
+                  return TextButton(
+                    onPressed: _ctrl.isSending.value
+                        ? null
+                        : () => _ctrl.send(widget.phone),
+                    child: const Text('Kodu Tekrar Gönder'),
+                  );
+                }),
               ),
             ],
           ),

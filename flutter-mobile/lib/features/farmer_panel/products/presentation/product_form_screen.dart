@@ -1,6 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -15,30 +15,31 @@ import '../../../../shared/widgets/app_text_field.dart';
 import '../../../public/categories/models/category_model.dart';
 import '../../../public/categories/providers/category_provider.dart';
 import '../../profile/providers/farmer_profile_provider.dart';
+import '../data/farmer_product_repository.dart';
 import '../models/farmer_product_model.dart';
 import '../providers/my_products_provider.dart';
 import '../providers/product_form_provider.dart';
-import '../data/farmer_product_repository.dart';
 
 /// Used by both add and edit. Pass `editingId` to load + update.
-class ProductFormScreen extends ConsumerStatefulWidget {
+class ProductFormScreen extends StatefulWidget {
   final String? editingId;
   const ProductFormScreen({super.key, this.editingId});
 
   @override
-  ConsumerState<ProductFormScreen> createState() => _ProductFormScreenState();
+  State<ProductFormScreen> createState() => _ProductFormScreenState();
 }
 
-class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
+class _ProductFormScreenState extends State<ProductFormScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _initialized = false;
   bool _loadingExisting = false;
   String? _loadError;
 
+  ProductFormController get _formCtrl => Get.find<ProductFormController>();
+
   Future<bool> _confirmDiscard() async {
-    final state = ref.read(productFormProvider);
-    final isDirty = state.data.title.isNotEmpty ||
-        state.data.imageUrls.isNotEmpty;
+    final data = _formCtrl.data.value;
+    final isDirty = data.title.isNotEmpty || data.imageUrls.isNotEmpty;
     if (!isDirty) return true;
     final result = await showDialog<bool>(
       context: context,
@@ -76,6 +77,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   @override
   void initState() {
     super.initState();
+    _formCtrl.reset();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _initializeForm();
     });
@@ -83,28 +85,26 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   Future<void> _initializeForm() async {
     if (_initialized) return;
-    final notifier = ref.read(productFormProvider.notifier);
-
     if (widget.editingId != null) {
       setState(() => _loadingExisting = true);
       try {
-        final m = await ref
-            .read(farmerProductRepositoryProvider)
+        final m = await Get.find<FarmerProductRepository>()
             .getById(widget.editingId!);
-        notifier.hydrate(m);
+        _formCtrl.hydrate(m);
       } catch (e) {
         setState(() => _loadError = e.toString());
       } finally {
         if (mounted) setState(() => _loadingExisting = false);
       }
     } else {
-      // Pre-fill location from farmer profile.
-      final p = ref.read(farmerProfileProvider).profile;
-      if (p != null) {
-        notifier.update((d) => d.copyWith(
-              city: p.city,
-              district: p.district,
-              village: p.village,
+      final profile = Get.isRegistered<FarmerProfileController>()
+          ? Get.find<FarmerProfileController>().profile.value
+          : null;
+      if (profile != null) {
+        _formCtrl.patch((d) => d.copyWith(
+              city: profile.city,
+              district: profile.district,
+              village: profile.village,
             ));
       }
     }
@@ -112,8 +112,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   }
 
   Future<void> _pickImage(ImageSource source) async {
-    final state = ref.read(productFormProvider);
-    if (state.data.imageUrls.length >= AppConstants.maxProductImages) {
+    final data = _formCtrl.data.value;
+    if (data.imageUrls.length >= AppConstants.maxProductImages) {
       context.snack(
         'En fazla ${AppConstants.maxProductImages} fotoğraf ekleyebilirsiniz',
         isError: true,
@@ -143,12 +143,14 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
         : 'image/jpeg';
     final filename = '${DateTime.now().millisecondsSinceEpoch}_product.$ext';
 
-    final ok = await ref
-        .read(productFormProvider.notifier)
-        .uploadImage(bytes, filename: filename, contentType: contentType);
+    final ok = await _formCtrl.uploadImage(
+      bytes,
+      filename: filename,
+      contentType: contentType,
+    );
     if (!mounted) return;
     if (!ok) {
-      final err = ref.read(productFormProvider).errorMessage;
+      final err = _formCtrl.errorMessage.value;
       context.snack(
         err ?? 'Fotoğraf yüklenemedi. Lütfen tekrar deneyin.',
         isError: true,
@@ -187,7 +189,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    final data = ref.read(productFormProvider).data;
+    final data = _formCtrl.data.value;
     if (data.categoryId == null) {
       context.snack('Kategori seçin', isError: true);
       return;
@@ -215,31 +217,26 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       );
       if (proceed != true) return;
     }
-    final ok = await ref
-        .read(productFormProvider.notifier)
-        .submit(editingId: widget.editingId);
+    final ok = await _formCtrl.submit(editingId: widget.editingId);
     if (!mounted) return;
     if (ok) {
       context.toast(widget.editingId == null
           ? 'Ürününüz incelemeye alındı.'
           : 'Ürün güncellendi.');
-      ref.invalidate(myProductsProvider);
+      Get.find<MyProductsController>().refresh();
       if (context.canPop()) {
         context.pop();
       } else {
         context.go('/farmer/products');
       }
     } else {
-      final err = ref.read(productFormProvider).errorMessage;
+      final err = _formCtrl.errorMessage.value;
       if (err != null) context.snack(err, isError: true);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(productFormProvider);
-    final categories = ref.watch(categoryTreeProvider);
-
     if (_loadingExisting) {
       return Scaffold(
         appBar: AppBar(
@@ -278,136 +275,133 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           padding: const EdgeInsets.all(16),
           child: Form(
             key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _ImagePickerSection(
-                  imageUrls: state.data.imageUrls,
-                  isUploading: state.isUploadingImage,
-                  onAdd: _showImageSourceSheet,
-                  onRemove: (i) =>
-                      ref.read(productFormProvider.notifier).removeImage(i),
-                ),
-                const SizedBox(height: 16),
-                categories.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Text(
-                    'Kategoriler yüklenemedi',
-                    style: TextStyle(color: AppColors.textSecondary),
+            child: Obx(() {
+              final state = _formCtrl;
+              final data = state.data.value;
+              final catCtrl = Get.find<CategoryController>();
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _ImagePickerSection(
+                    imageUrls: data.imageUrls,
+                    isUploading: state.isUploadingImage.value,
+                    onAdd: _showImageSourceSheet,
+                    onRemove: (i) => state.removeImage(i),
                   ),
-                  data: (list) =>
-                      _CategorySelector(categories: list, selected: state.data),
-                ),
-                const SizedBox(height: 12),
-                AppTextField(
-                  label: 'Ürün Adı',
-                  hint: 'Günlük Köy Çileği',
-                  initialValue: state.data.title,
-                  maxLength: 255,
-                  onChanged: (v) => ref
-                      .read(productFormProvider.notifier)
-                      .update((d) => d.copyWith(title: v)),
-                  validator: (v) => Validators.required(v, field: 'Ürün adı'),
-                ),
-                const SizedBox(height: 12),
-                AppTextField(
-                  label: 'Açıklama',
-                  hint: 'Ürününüzü tanıtın...',
-                  initialValue: state.data.description,
-                  maxLines: 5,
-                  onChanged: (v) => ref
-                      .read(productFormProvider.notifier)
-                      .update((d) => d.copyWith(description: v)),
-                  validator: (v) =>
-                      Validators.required(v, field: 'Açıklama'),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: AppTextField(
-                        label: 'Fiyat',
-                        prefix: const Padding(
-                          padding: EdgeInsets.all(12),
-                          child: Text('₺',
-                              style: TextStyle(fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 16),
+                  if (catCtrl.isLoading.value)
+                    const Center(child: CircularProgressIndicator())
+                  else if (catCtrl.error.value != null)
+                    Text(
+                      'Kategoriler yüklenemedi',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    )
+                  else
+                    _CategorySelector(
+                      categories: catCtrl.categories,
+                      selected: data,
+                    ),
+                  const SizedBox(height: 12),
+                  AppTextField(
+                    label: 'Ürün Adı',
+                    hint: 'Günlük Köy Çileği',
+                    initialValue: data.title,
+                    maxLength: 255,
+                    onChanged: (v) => state.patch((d) => d.copyWith(title: v)),
+                    validator: (v) => Validators.required(v, field: 'Ürün adı'),
+                  ),
+                  const SizedBox(height: 12),
+                  AppTextField(
+                    label: 'Açıklama',
+                    hint: 'Ürününüzü tanıtın...',
+                    initialValue: data.description,
+                    maxLines: 5,
+                    onChanged: (v) =>
+                        state.patch((d) => d.copyWith(description: v)),
+                    validator: (v) =>
+                        Validators.required(v, field: 'Açıklama'),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: AppTextField(
+                          label: 'Fiyat',
+                          prefix: const Padding(
+                            padding: EdgeInsets.all(12),
+                            child: Text('₺',
+                                style: TextStyle(fontWeight: FontWeight.w600)),
+                          ),
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
+                          initialValue: data.price,
+                          onChanged: (v) =>
+                              state.patch((d) => d.copyWith(price: v)),
+                          validator: Validators.positiveNumber,
                         ),
-                        keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
-                        initialValue: state.data.price,
-                        onChanged: (v) => ref
-                            .read(productFormProvider.notifier)
-                            .update((d) => d.copyWith(price: v)),
-                        validator: Validators.positiveNumber,
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        value: state.data.unit,
-                        decoration: const InputDecoration(labelText: 'Birim'),
-                        items: productUnits
-                            .map((u) =>
-                                DropdownMenuItem(value: u, child: Text(u)))
-                            .toList(),
-                        onChanged: (v) {
-                          if (v == null) return;
-                          ref
-                              .read(productFormProvider.notifier)
-                              .update((d) => d.copyWith(unit: v));
-                        },
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          value: data.unit,
+                          decoration:
+                              const InputDecoration(labelText: 'Birim'),
+                          items: productUnits
+                              .map((u) => DropdownMenuItem(
+                                  value: u, child: Text(u)))
+                              .toList(),
+                          onChanged: (v) {
+                            if (v == null) return;
+                            state.patch((d) => d.copyWith(unit: v));
+                          },
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                _StockToggle(
-                  current: state.data.stockStatus,
-                  onChanged: (v) => ref
-                      .read(productFormProvider.notifier)
-                      .update((d) => d.copyWith(stockStatus: v)),
-                ),
-                const SizedBox(height: 16),
-                Text('Konum', style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 8),
-                AppTextField(
-                  label: 'İl',
-                  initialValue: state.data.city,
-                  onChanged: (v) => ref
-                      .read(productFormProvider.notifier)
-                      .update((d) => d.copyWith(city: v)),
-                  validator: (v) => Validators.required(v, field: 'İl'),
-                ),
-                const SizedBox(height: 12),
-                AppTextField(
-                  label: 'İlçe',
-                  initialValue: state.data.district,
-                  onChanged: (v) => ref
-                      .read(productFormProvider.notifier)
-                      .update((d) => d.copyWith(district: v)),
-                  validator: (v) => Validators.required(v, field: 'İlçe'),
-                ),
-                const SizedBox(height: 12),
-                AppTextField(
-                  label: 'Köy / Mahalle',
-                  initialValue: state.data.village,
-                  onChanged: (v) => ref
-                      .read(productFormProvider.notifier)
-                      .update((d) => d.copyWith(village: v)),
-                  validator: (v) =>
-                      Validators.required(v, field: 'Köy/Mahalle'),
-                ),
-                const SizedBox(height: 24),
-                AppButton(
-                  label: widget.editingId == null
-                      ? 'Ürünü Yayına Gönder'
-                      : 'Değişiklikleri Kaydet',
-                  isLoading: state.isSubmitting,
-                  onPressed: state.isSubmitting ? null : _submit,
-                ),
-              ],
-            ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _StockToggle(
+                    current: data.stockStatus,
+                    onChanged: (v) =>
+                        state.patch((d) => d.copyWith(stockStatus: v)),
+                  ),
+                  const SizedBox(height: 16),
+                  Text('Konum',
+                      style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  AppTextField(
+                    label: 'İl',
+                    initialValue: data.city,
+                    onChanged: (v) => state.patch((d) => d.copyWith(city: v)),
+                    validator: (v) => Validators.required(v, field: 'İl'),
+                  ),
+                  const SizedBox(height: 12),
+                  AppTextField(
+                    label: 'İlçe',
+                    initialValue: data.district,
+                    onChanged: (v) =>
+                        state.patch((d) => d.copyWith(district: v)),
+                    validator: (v) => Validators.required(v, field: 'İlçe'),
+                  ),
+                  const SizedBox(height: 12),
+                  AppTextField(
+                    label: 'Köy / Mahalle',
+                    initialValue: data.village,
+                    onChanged: (v) =>
+                        state.patch((d) => d.copyWith(village: v)),
+                    validator: (v) =>
+                        Validators.required(v, field: 'Köy/Mahalle'),
+                  ),
+                  const SizedBox(height: 24),
+                  AppButton(
+                    label: widget.editingId == null
+                        ? 'Ürünü Yayına Gönder'
+                        : 'Değişiklikleri Kaydet',
+                    isLoading: state.isSubmitting.value,
+                    onPressed: state.isSubmitting.value ? null : _submit,
+                  ),
+                ],
+              );
+            }),
           ),
         ),
       ),
@@ -518,7 +512,10 @@ class _AddImageTile extends StatelessWidget {
         alignment: Alignment.center,
         child: isUploading
             ? const SizedBox(
-                width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
             : const Icon(Icons.add_a_photo_outlined,
                 color: AppColors.textSecondary),
       ),
@@ -526,22 +523,22 @@ class _AddImageTile extends StatelessWidget {
   }
 }
 
-class _CategorySelector extends ConsumerStatefulWidget {
+class _CategorySelector extends StatefulWidget {
   final List<CategoryModel> categories;
   final ProductFormData selected;
   const _CategorySelector(
       {required this.categories, required this.selected});
   @override
-  ConsumerState<_CategorySelector> createState() => _CategorySelectorState();
+  State<_CategorySelector> createState() => _CategorySelectorState();
 }
 
-class _CategorySelectorState extends ConsumerState<_CategorySelector> {
+class _CategorySelectorState extends State<_CategorySelector> {
   String? _mainId;
 
   @override
   void initState() {
     super.initState();
-    final flat = ref.read(categoryFlatProvider);
+    final flat = Get.find<CategoryController>().flat;
     final selectedId = widget.selected.categoryId;
     if (selectedId != null) {
       final cat = findCategoryById(flat, selectedId);
@@ -552,12 +549,9 @@ class _CategorySelectorState extends ConsumerState<_CategorySelector> {
   @override
   Widget build(BuildContext context) {
     final roots = widget.categories.where((c) => c.isRoot).toList();
-    final mainCategory =
-        _mainId == null ? null : roots.firstWhere(
-            (c) => c.id == _mainId,
-            orElse: () => roots.isEmpty
-                ? CategoryModel(id: '', name: '', slug: '')
-                : roots.first);
+    final mainCategory = _mainId == null
+        ? null
+        : roots.firstWhereOrNull((c) => c.id == _mainId);
     final subs = mainCategory?.children ?? const [];
 
     return Column(
@@ -571,10 +565,9 @@ class _CategorySelectorState extends ConsumerState<_CategorySelector> {
               .toList(),
           onChanged: (v) {
             setState(() => _mainId = v);
-            // Reset subcategory.
-            ref.read(productFormProvider.notifier).update(
-                  (d) => d.copyWith(categoryId: null),
-                );
+            Get.find<ProductFormController>().patch(
+              (d) => d.copyWith(categoryId: null),
+            );
           },
         ),
         if (subs.isNotEmpty) ...[
@@ -589,9 +582,9 @@ class _CategorySelectorState extends ConsumerState<_CategorySelector> {
                     DropdownMenuItem(value: c.id, child: Text(c.name)))
                 .toList(),
             onChanged: (v) {
-              ref
-                  .read(productFormProvider.notifier)
-                  .update((d) => d.copyWith(categoryId: v));
+              Get.find<ProductFormController>().patch(
+                (d) => d.copyWith(categoryId: v),
+              );
             },
           ),
         ],

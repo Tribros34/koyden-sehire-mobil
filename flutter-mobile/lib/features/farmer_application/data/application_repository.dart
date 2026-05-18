@@ -1,16 +1,11 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_endpoints.dart';
 import '../../../core/errors/error_handler.dart';
 import '../models/application_model.dart';
-
-final applicationRepositoryProvider = Provider<ApplicationRepository>((ref) {
-  return ApplicationRepository(ref.watch(apiClientProvider));
-});
 
 class ApplicationRepository {
   final ApiClient _api;

@@ -1,6 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/theme.dart';
@@ -21,14 +21,14 @@ const _tabs = [
   ('Reddedildi', 'rejected'),
 ];
 
-class MyProductsScreen extends ConsumerStatefulWidget {
+class MyProductsScreen extends StatefulWidget {
   const MyProductsScreen({super.key});
 
   @override
-  ConsumerState<MyProductsScreen> createState() => _MyProductsScreenState();
+  State<MyProductsScreen> createState() => _MyProductsScreenState();
 }
 
-class _MyProductsScreenState extends ConsumerState<MyProductsScreen>
+class _MyProductsScreenState extends State<MyProductsScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tab;
 
@@ -38,9 +38,7 @@ class _MyProductsScreenState extends ConsumerState<MyProductsScreen>
     _tab = TabController(length: _tabs.length, vsync: this);
     _tab.addListener(() {
       if (_tab.indexIsChanging) return;
-      ref
-          .read(myProductsProvider.notifier)
-          .setStatus(_tabs[_tab.index].$2);
+      Get.find<MyProductsController>().setStatus(_tabs[_tab.index].$2);
     });
   }
 
@@ -52,8 +50,6 @@ class _MyProductsScreenState extends ConsumerState<MyProductsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(myProductsProvider);
-
     return Scaffold(
       bottomNavigationBar: const FarmerBottomNav(currentIndex: 1),
       appBar: AppBar(
@@ -70,50 +66,47 @@ class _MyProductsScreenState extends ConsumerState<MyProductsScreen>
         icon: const Icon(Icons.add),
         label: const Text('Yeni Ürün'),
       ),
-      body: Builder(
-        builder: (_) {
-          if (state.isLoading && state.items.isEmpty) {
-            return const AppLoading();
-          }
-          if (state.errorMessage != null && state.items.isEmpty) {
-            return AppErrorWidget(
-              message: state.errorMessage!,
-              onRetry: () =>
-                  ref.read(myProductsProvider.notifier).refresh(),
-            );
-          }
-          if (state.items.isEmpty) {
-            return AppEmptyWidget(
-              message: 'Henüz ürün eklemediniz.',
-              action: TextButton.icon(
-                onPressed: () => context.push('/farmer/products/new'),
-                icon: const Icon(Icons.add),
-                label: const Text('İlk ürününüzü ekleyin'),
-              ),
-            );
-          }
-          return RefreshIndicator(
-            onRefresh: () =>
-                ref.read(myProductsProvider.notifier).refresh(),
-            child: ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: state.items.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (_, i) => _MyProductCard(product: state.items[i]),
+      body: Obx(() {
+        final ctrl = Get.find<MyProductsController>();
+        if (ctrl.isLoading.value && ctrl.items.isEmpty) {
+          return const AppLoading();
+        }
+        if (ctrl.errorMessage.value != null && ctrl.items.isEmpty) {
+          return AppErrorWidget(
+            message: ctrl.errorMessage.value!,
+            onRetry: ctrl.refresh,
+          );
+        }
+        if (ctrl.items.isEmpty) {
+          return AppEmptyWidget(
+            message: 'Henüz ürün eklemediniz.',
+            action: TextButton.icon(
+              onPressed: () => context.push('/farmer/products/new'),
+              icon: const Icon(Icons.add),
+              label: const Text('İlk ürününüzü ekleyin'),
             ),
           );
-        },
-      ),
+        }
+        return RefreshIndicator(
+          onRefresh: ctrl.refresh,
+          child: ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: ctrl.items.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (_, i) => _MyProductCard(product: ctrl.items[i]),
+          ),
+        );
+      }),
     );
   }
 }
 
-class _MyProductCard extends ConsumerWidget {
+class _MyProductCard extends StatelessWidget {
   final FarmerProductModel product;
   const _MyProductCard({required this.product});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -211,13 +204,10 @@ class _MyProductCard extends ConsumerWidget {
                       final next = product.stockStatus == 'available'
                           ? 'out_of_stock'
                           : 'available';
-                      final ok = await ref
-                          .read(myProductsProvider.notifier)
+                      final ok = await Get.find<MyProductsController>()
                           .setStockStatus(product.id, next);
                       if (!context.mounted) return;
-                      if (ok) {
-                        context.toast('Stok durumu güncellendi');
-                      }
+                      if (ok) context.toast('Stok durumu güncellendi');
                     },
                   ),
                 ),

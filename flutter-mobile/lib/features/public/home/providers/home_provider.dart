@@ -1,27 +1,49 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 
+import '../../farmers/models/farmer_model.dart';
 import '../../products/data/product_repository.dart';
 import '../../products/models/product_model.dart';
 
-/// Newest products for the home feed.
-final homeNewProductsProvider = FutureProvider<List<ProductModel>>((ref) async {
-  final res = await ref
-      .watch(productRepositoryProvider)
-      .list(filter: const ProductFilter(), page: 1, limit: 10);
-  return res.items;
-});
+class HomeController extends GetxController {
+  final ProductRepository _repo;
+  HomeController(this._repo);
 
-/// Featured-farmers section: derive unique farmers from latest products
-/// because the backend has no `GET /farmers` list endpoint.
-final featuredFarmersProvider = Provider((ref) {
-  final products = ref.watch(homeNewProductsProvider).valueOrNull ?? const [];
-  final seen = <String>{};
-  final farmers = <dynamic>[];
-  for (final p in products) {
-    final f = p.farmer;
-    if (f == null) continue;
-    if (seen.add(f.id)) farmers.add(f);
-    if (farmers.length >= 8) break;
+  final RxBool isLoading = false.obs;
+  final RxList<ProductModel> newProducts = <ProductModel>[].obs;
+  final RxList<FarmerSummary> featuredFarmers = <FarmerSummary>[].obs;
+  final RxnString error = RxnString();
+
+  @override
+  void onInit() {
+    super.onInit();
+    load();
   }
-  return farmers;
-});
+
+  Future<void> load() async {
+    isLoading.value = true;
+    error.value = null;
+    try {
+      final res = await _repo.list(
+        filter: const ProductFilter(),
+        page: 1,
+        limit: 10,
+      );
+      newProducts.assignAll(res.items);
+
+      // Derive featured farmers from latest products (no /farmers list endpoint).
+      final seen = <String>{};
+      final farmers = <FarmerSummary>[];
+      for (final p in res.items) {
+        final f = p.farmer;
+        if (f == null) continue;
+        if (seen.add(f.id)) farmers.add(f);
+        if (farmers.length >= 8) break;
+      }
+      featuredFarmers.assignAll(farmers);
+    } catch (e) {
+      error.value = e.toString();
+    } finally {
+      isLoading.value = false;
+    }
+  }
+}

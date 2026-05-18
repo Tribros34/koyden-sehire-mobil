@@ -1,13 +1,7 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../../../core/api/api_client.dart';
 import '../../../../core/api/api_endpoints.dart';
 import '../../../../shared/models/pagination_model.dart';
 import '../models/product_model.dart';
-
-final productRepositoryProvider = Provider<ProductRepository>((ref) {
-  return ProductRepository(ref.watch(apiClientProvider));
-});
 
 class ProductRepository {
   final ApiClient _api;

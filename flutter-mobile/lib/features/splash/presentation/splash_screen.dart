@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/constants.dart';
 import '../../../app/theme.dart';
-import '../../auth/providers/auth_provider.dart';
+import '../../../core/services/auth_service.dart';
 import '../../auth/providers/auth_state.dart';
 
-class SplashScreen extends ConsumerStatefulWidget {
+class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  ConsumerState<SplashScreen> createState() => _SplashScreenState();
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends ConsumerState<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
@@ -22,8 +22,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   Future<void> _bootstrap() async {
+    final auth = Get.find<AuthService>();
     final start = DateTime.now();
-    await ref.read(authProvider.notifier).bootstrap();
+    await auth.bootstrap();
     final elapsed = DateTime.now().difference(start);
     if (elapsed < const Duration(milliseconds: 1200)) {
       await Future.delayed(
@@ -31,8 +32,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       );
     }
     if (!mounted) return;
-    final auth = ref.read(authProvider);
-    switch (auth.status) {
+    switch (auth.status.value) {
       case AuthStatus.farmerActive:
         context.go('/farmer/dashboard');
         break;

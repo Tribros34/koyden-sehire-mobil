@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -13,6 +13,7 @@ import '../../../shared/extensions/context_extensions.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/category_chip.dart';
+import '../../public/categories/data/category_repository.dart';
 import '../../public/categories/providers/category_provider.dart';
 import '../../public/farmers/models/farmer_model.dart';
 import '../models/application_model.dart';
@@ -26,16 +27,16 @@ const _stepTitles = [
   'Şartlar ve Gönder',
 ];
 
-class ApplicationFormScreen extends ConsumerStatefulWidget {
+ApplicationFormController _formCtrl() => Get.find<ApplicationFormController>();
+
+class ApplicationFormScreen extends StatefulWidget {
   const ApplicationFormScreen({super.key});
 
   @override
-  ConsumerState<ApplicationFormScreen> createState() =>
-      _ApplicationFormScreenState();
+  State<ApplicationFormScreen> createState() => _ApplicationFormScreenState();
 }
 
-class _ApplicationFormScreenState
-    extends ConsumerState<ApplicationFormScreen> {
+class _ApplicationFormScreenState extends State<ApplicationFormScreen> {
   Future<bool> _confirmExit() async {
     final ok = await showDialog<bool>(
       context: context,
@@ -59,63 +60,65 @@ class _ApplicationFormScreenState
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(applicationFormProvider);
+    final ctrl = _formCtrl();
 
-    if (state.invite == null) {
-      // Defensive: if user lands here without an invite, send back.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) context.go('/apply');
-      });
-      return const Scaffold();
-    }
+    return Obx(() {
+      if (ctrl.invite.value == null) {
+        // Defensive: if user lands here without an invite, send back.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) context.go('/apply');
+        });
+        return const Scaffold();
+      }
 
-    return PopScope(
-      canPop: false,
-      onPopInvoked: (didPop) async {
-        if (didPop) return;
-        if (await _confirmExit() && mounted) {
-          ref.read(applicationFormProvider.notifier).reset();
-          context.go('/');
-        }
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text('Adım ${state.currentStep + 1} / 5'),
-          leading: IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () async {
-              if (await _confirmExit() && mounted) {
-                ref.read(applicationFormProvider.notifier).reset();
-                context.go('/');
-              }
-            },
+      return PopScope(
+        canPop: false,
+        onPopInvoked: (didPop) async {
+          if (didPop) return;
+          if (await _confirmExit() && mounted) {
+            ctrl.reset();
+            context.go('/');
+          }
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text('Adım ${ctrl.currentStep.value + 1} / 5'),
+            leading: IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: () async {
+                if (await _confirmExit() && mounted) {
+                  ctrl.reset();
+                  context.go('/');
+                }
+              },
+            ),
           ),
-        ),
-        body: SafeArea(
-          child: Column(
-            children: [
-              _StepIndicator(
-                currentStep: state.currentStep,
-                totalSteps: 5,
-                title: _stepTitles[state.currentStep],
-              ),
-              Expanded(
-                child: IndexedStack(
-                  index: state.currentStep,
-                  children: const [
-                    _StepAccount(),
-                    _StepProducer(),
-                    _StepProduction(),
-                    _StepVideo(),
-                    _StepTerms(),
-                  ],
+          body: SafeArea(
+            child: Column(
+              children: [
+                _StepIndicator(
+                  currentStep: ctrl.currentStep.value,
+                  totalSteps: 5,
+                  title: _stepTitles[ctrl.currentStep.value],
                 ),
-              ),
-            ],
+                Expanded(
+                  child: IndexedStack(
+                    index: ctrl.currentStep.value,
+                    children: const [
+                      _StepAccount(),
+                      _StepProducer(),
+                      _StepProduction(),
+                      _StepVideo(),
+                      _StepTerms(),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 }
 
@@ -156,13 +159,13 @@ class _StepIndicator extends StatelessWidget {
 
 // -- STEP 1: Account info --------------------------------------------------
 
-class _StepAccount extends ConsumerStatefulWidget {
+class _StepAccount extends StatefulWidget {
   const _StepAccount();
   @override
-  ConsumerState<_StepAccount> createState() => _StepAccountState();
+  State<_StepAccount> createState() => _StepAccountState();
 }
 
-class _StepAccountState extends ConsumerState<_StepAccount> {
+class _StepAccountState extends State<_StepAccount> {
   final _formKey = GlobalKey<FormState>();
   final _name = TextEditingController();
   final _phone = TextEditingController();
@@ -173,7 +176,7 @@ class _StepAccountState extends ConsumerState<_StepAccount> {
   @override
   void initState() {
     super.initState();
-    final d = ref.read(applicationFormProvider).data;
+    final d = _formCtrl().data.value;
     _name.text = d.fullName;
     _phone.text = d.phone;
     _email.text = d.email ?? '';
@@ -191,43 +194,40 @@ class _StepAccountState extends ConsumerState<_StepAccount> {
   }
 
   void _save() {
-    ref.read(applicationFormProvider.notifier).updateData(
-          (d) => d.copyWith(
-            fullName: _name.text.trim(),
-            phone: _phone.text.trim(),
-            email: _email.text.trim().isEmpty ? null : _email.text.trim(),
-            password: _password.text,
-          ),
-        );
+    _formCtrl().updateData(
+      (d) => d.copyWith(
+        fullName: _name.text.trim(),
+        phone: _phone.text.trim(),
+        email: _email.text.trim().isEmpty ? null : _email.text.trim(),
+        password: _password.text,
+      ),
+    );
   }
 
   Future<void> _verifyPhone() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     _save();
     final phone = _phone.text.trim();
-    final verified =
-        await context.push<bool>('/otp?phone=$phone') ?? false;
+    final verified = await context.push<bool>('/otp?phone=$phone') ?? false;
     if (!mounted) return;
     if (verified) {
-      ref.read(applicationFormProvider.notifier).setPhoneVerified(true);
+      _formCtrl().setPhoneVerified(true);
       context.toast('Telefon doğrulandı');
     }
   }
 
   void _continue() {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    if (!ref.read(applicationFormProvider).phoneVerified) {
+    if (!_formCtrl().phoneVerified.value) {
       context.snack('Lütfen önce telefonunuzu doğrulayın', isError: true);
       return;
     }
     _save();
-    ref.read(applicationFormProvider.notifier).next();
+    _formCtrl().next();
   }
 
   @override
   Widget build(BuildContext context) {
-    final phoneVerified =
-        ref.watch(applicationFormProvider.select((s) => s.phoneVerified));
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Form(
@@ -238,36 +238,42 @@ class _StepAccountState extends ConsumerState<_StepAccount> {
             AppTextField(
               label: 'Ad Soyad',
               controller: _name,
-              validator: (v) =>
-                  Validators.required(v, field: 'Ad Soyad'),
+              validator: (v) => Validators.required(v, field: 'Ad Soyad'),
             ),
             const SizedBox(height: 12),
-            AppTextField(
-              label: 'Telefon (05XXXXXXXXX)',
-              controller: _phone,
-              keyboardType: TextInputType.phone,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(11),
-              ],
-              validator: Validators.phone,
-              suffix: phoneVerified
-                  ? const Padding(
-                      padding: EdgeInsets.only(right: 8),
-                      child: Icon(Icons.check_circle,
-                          color: AppColors.success),
-                    )
-                  : null,
-            ),
+            Obx(() {
+              final verified = _formCtrl().phoneVerified.value;
+              return AppTextField(
+                label: 'Telefon (05XXXXXXXXX)',
+                controller: _phone,
+                keyboardType: TextInputType.phone,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(11),
+                ],
+                validator: Validators.phone,
+                suffix: verified
+                    ? const Padding(
+                        padding: EdgeInsets.only(right: 8),
+                        child: Icon(Icons.check_circle,
+                            color: AppColors.success),
+                      )
+                    : null,
+              );
+            }),
             const SizedBox(height: 8),
-            if (!phoneVerified)
-              AppButton(
+            Obx(() {
+              if (_formCtrl().phoneVerified.value) {
+                return const SizedBox.shrink();
+              }
+              return AppButton(
                 label: 'Telefonu Doğrula',
                 variant: AppButtonVariant.secondary,
                 onPressed: _verifyPhone,
                 icon: const Icon(Icons.verified_user_outlined,
                     color: AppColors.primary),
-              ),
+              );
+            }),
             const SizedBox(height: 12),
             AppTextField(
               label: 'E-posta (isteğe bağlı)',
@@ -300,13 +306,13 @@ class _StepAccountState extends ConsumerState<_StepAccount> {
 
 // -- STEP 2: Producer profile ---------------------------------------------
 
-class _StepProducer extends ConsumerStatefulWidget {
+class _StepProducer extends StatefulWidget {
   const _StepProducer();
   @override
-  ConsumerState<_StepProducer> createState() => _StepProducerState();
+  State<_StepProducer> createState() => _StepProducerState();
 }
 
-class _StepProducerState extends ConsumerState<_StepProducer> {
+class _StepProducerState extends State<_StepProducer> {
   final _formKey = GlobalKey<FormState>();
   final _businessName = TextEditingController();
   final _city = TextEditingController();
@@ -318,7 +324,7 @@ class _StepProducerState extends ConsumerState<_StepProducer> {
   @override
   void initState() {
     super.initState();
-    final d = ref.read(applicationFormProvider).data;
+    final d = _formCtrl().data.value;
     _businessName.text = d.businessName;
     _city.text = d.city;
     _district.text = d.district;
@@ -338,16 +344,16 @@ class _StepProducerState extends ConsumerState<_StepProducer> {
   }
 
   void _save() {
-    ref.read(applicationFormProvider.notifier).updateData(
-          (d) => d.copyWith(
-            businessName: _businessName.text.trim(),
-            producerType: _producerType,
-            city: _city.text.trim(),
-            district: _district.text.trim(),
-            village: _village.text.trim(),
-            bio: _bio.text.trim(),
-          ),
-        );
+    _formCtrl().updateData(
+      (d) => d.copyWith(
+        businessName: _businessName.text.trim(),
+        producerType: _producerType,
+        city: _city.text.trim(),
+        district: _district.text.trim(),
+        village: _village.text.trim(),
+        bio: _bio.text.trim(),
+      ),
+    );
   }
 
   void _continue() {
@@ -357,12 +363,12 @@ class _StepProducerState extends ConsumerState<_StepProducer> {
       return;
     }
     _save();
-    ref.read(applicationFormProvider.notifier).next();
+    _formCtrl().next();
   }
 
   void _back() {
     _save();
-    ref.read(applicationFormProvider.notifier).previous();
+    _formCtrl().previous();
   }
 
   @override
@@ -444,23 +450,29 @@ class _StepProducerState extends ConsumerState<_StepProducer> {
 
 // -- STEP 3: Production info ----------------------------------------------
 
-class _StepProduction extends ConsumerStatefulWidget {
+class _StepProduction extends StatefulWidget {
   const _StepProduction();
   @override
-  ConsumerState<_StepProduction> createState() => _StepProductionState();
+  State<_StepProduction> createState() => _StepProductionState();
 }
 
-class _StepProductionState extends ConsumerState<_StepProduction> {
+class _StepProductionState extends State<_StepProduction> {
   final _formKey = GlobalKey<FormState>();
   final _examples = TextEditingController();
   final _note = TextEditingController();
   Set<String> _selectedSlugs = {};
   String? _placeType;
 
+  late final CategoryController _cats;
+
   @override
   void initState() {
     super.initState();
-    final d = ref.read(applicationFormProvider).data;
+    _cats = Get.isRegistered<CategoryController>()
+        ? Get.find<CategoryController>()
+        : Get.put(CategoryController(Get.find<CategoryRepository>()),
+            permanent: true);
+    final d = _formCtrl().data.value;
     _examples.text = d.productExamples;
     _note.text = d.applicationNote ?? '';
     _selectedSlugs = d.productCategorySlugs.toSet();
@@ -475,15 +487,15 @@ class _StepProductionState extends ConsumerState<_StepProduction> {
   }
 
   void _save() {
-    ref.read(applicationFormProvider.notifier).updateData(
-          (d) => d.copyWith(
-            productCategorySlugs: _selectedSlugs.toList(),
-            productExamples: _examples.text.trim(),
-            productionPlaceType: _placeType,
-            applicationNote:
-                _note.text.trim().isEmpty ? null : _note.text.trim(),
-          ),
-        );
+    _formCtrl().updateData(
+      (d) => d.copyWith(
+        productCategorySlugs: _selectedSlugs.toList(),
+        productExamples: _examples.text.trim(),
+        productionPlaceType: _placeType,
+        applicationNote:
+            _note.text.trim().isEmpty ? null : _note.text.trim(),
+      ),
+    );
   }
 
   void _continue() {
@@ -493,17 +505,16 @@ class _StepProductionState extends ConsumerState<_StepProduction> {
       return;
     }
     _save();
-    ref.read(applicationFormProvider.notifier).next();
+    _formCtrl().next();
   }
 
   void _back() {
     _save();
-    ref.read(applicationFormProvider.notifier).previous();
+    _formCtrl().previous();
   }
 
   @override
   Widget build(BuildContext context) {
-    final categories = ref.watch(categoryTreeProvider);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Form(
@@ -514,32 +525,36 @@ class _StepProductionState extends ConsumerState<_StepProduction> {
             const Text('Ürün Kategorileri',
                 style: TextStyle(fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
-            categories.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Text('Kategoriler yüklenemedi',
-                  style: TextStyle(color: AppColors.textSecondary)),
-              data: (list) {
-                final roots = list.where((c) => c.isRoot).toList();
-                return Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: roots.map((c) {
-                    final selected = _selectedSlugs.contains(c.slug);
-                    return AppCategoryChip(
-                      label: c.name,
-                      selected: selected,
-                      onTap: () => setState(() {
-                        if (selected) {
-                          _selectedSlugs.remove(c.slug);
-                        } else {
-                          _selectedSlugs.add(c.slug);
-                        }
-                      }),
-                    );
-                  }).toList(),
+            Obx(() {
+              if (_cats.isLoading.value) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (_cats.error.value != null) {
+                return const Text(
+                  'Kategoriler yüklenemedi',
+                  style: TextStyle(color: AppColors.textSecondary),
                 );
-              },
-            ),
+              }
+              final roots = _cats.categories.where((c) => c.isRoot).toList();
+              return Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: roots.map((c) {
+                  final selected = _selectedSlugs.contains(c.slug);
+                  return AppCategoryChip(
+                    label: c.name,
+                    selected: selected,
+                    onTap: () => setState(() {
+                      if (selected) {
+                        _selectedSlugs.remove(c.slug);
+                      } else {
+                        _selectedSlugs.add(c.slug);
+                      }
+                    }),
+                  );
+                }).toList(),
+              );
+            }),
             const SizedBox(height: 16),
             AppTextField(
               label: 'Ürün Örnekleri',
@@ -592,13 +607,13 @@ class _StepProductionState extends ConsumerState<_StepProduction> {
 
 // -- STEP 4: Video verification (optional) --------------------------------
 
-class _StepVideo extends ConsumerStatefulWidget {
+class _StepVideo extends StatefulWidget {
   const _StepVideo();
   @override
-  ConsumerState<_StepVideo> createState() => _StepVideoState();
+  State<_StepVideo> createState() => _StepVideoState();
 }
 
-class _StepVideoState extends ConsumerState<_StepVideo> {
+class _StepVideoState extends State<_StepVideo> {
   File? _videoFile;
   int? _videoSize;
 
@@ -632,27 +647,25 @@ class _StepVideoState extends ConsumerState<_StepVideo> {
   Future<void> _upload() async {
     final file = _videoFile;
     if (file == null) return;
-    final ok = await ref
-        .read(applicationFormProvider.notifier)
-        .uploadVideo(file);
+    final ok = await _formCtrl().uploadVideo(file);
     if (!mounted) return;
     if (ok) {
       context.toast('Video yüklendi');
-      ref.read(applicationFormProvider.notifier).next();
+      _formCtrl().next();
     } else {
-      final err = ref.read(applicationFormProvider).errorMessage;
+      final err = _formCtrl().errorMessage.value;
       if (err != null) context.snack(err, isError: true);
     }
   }
 
   void _skip() {
-    ref.read(applicationFormProvider.notifier).updateData(
-          (d) => d.copyWith(clearVideoKey: true),
-        );
-    ref.read(applicationFormProvider.notifier).next();
+    _formCtrl().updateData(
+      (d) => d.copyWith(clearVideoKey: true),
+    );
+    _formCtrl().next();
   }
 
-  void _back() => ref.read(applicationFormProvider.notifier).previous();
+  void _back() => _formCtrl().previous();
 
   String _bytesPretty(int bytes) {
     if (bytes < 1024) return '$bytes B';
@@ -662,169 +675,172 @@ class _StepVideoState extends ConsumerState<_StepVideo> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(applicationFormProvider);
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Başvurunuzu daha güvenli ve hızlı değerlendirebilmemiz için kısa bir tanışma videosu yükleyebilirsiniz.',
-            style: TextStyle(color: AppColors.textSecondary, height: 1.4),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(color: AppColors.border),
+    return Obx(() {
+      final isUploading = _formCtrl().isUploading.value;
+      final uploadProgress = _formCtrl().uploadProgress.value;
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Başvurunuzu daha güvenli ve hızlı değerlendirebilmemiz için kısa bir tanışma videosu yükleyebilirsiniz.',
+              style: TextStyle(color: AppColors.textSecondary, height: 1.4),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text('Videoda ne söylenmeli?',
-                    style: TextStyle(fontWeight: FontWeight.w600)),
-                SizedBox(height: 4),
-                Text(
-                  'Adınızı, nerede üretim yaptığınızı ve hangi ürünleri ürettiğinizi söylemeniz yeterlidir. Mümkünse ürünlerinizi, bahçenizi veya üretim alanınızı da gösterebilirsiniz.',
-                ),
-                SizedBox(height: 8),
-                Text('• 30-60 saniye önerilen, maksimum 90 saniye'),
-                Text('• Maksimum 50 MB'),
-                Text('• MP4 veya MOV formatı'),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          if (_videoFile == null) ...[
-            AppButton(
-              label: 'Kameradan Çek',
-              icon: const Icon(Icons.videocam_outlined, color: Colors.white),
-              onPressed: () => _pickVideo(ImageSource.camera),
-            ),
-            const SizedBox(height: 8),
-            AppButton(
-              label: 'Galeriden Seç',
-              variant: AppButtonVariant.secondary,
-              icon: const Icon(Icons.photo_library_outlined,
-                  color: AppColors.primary),
-              onPressed: () => _pickVideo(ImageSource.gallery),
-            ),
-          ] else ...[
+            const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: AppColors.background,
                 borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border.all(color: AppColors.border),
               ),
-              child: Row(
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.movie_outlined, color: AppColors.primary),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _videoFile!.path.split('/').last,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if (_videoSize != null)
-                          Text(
-                            _bytesPretty(_videoSize!),
-                            style:
-                                const TextStyle(color: AppColors.textSecondary),
-                          ),
-                      ],
-                    ),
+                  Text('Videoda ne söylenmeli?',
+                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  SizedBox(height: 4),
+                  Text(
+                    'Adınızı, nerede üretim yaptığınızı ve hangi ürünleri ürettiğinizi söylemeniz yeterlidir. Mümkünse ürünlerinizi, bahçenizi veya üretim alanınızı da gösterebilirsiniz.',
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: state.isUploading
-                        ? null
-                        : () => setState(() {
-                              _videoFile = null;
-                              _videoSize = null;
-                            }),
+                  SizedBox(height: 8),
+                  Text('• 30-60 saniye önerilen, maksimum 90 saniye'),
+                  Text('• Maksimum 50 MB'),
+                  Text('• MP4 veya MOV formatı'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            if (_videoFile == null) ...[
+              AppButton(
+                label: 'Kameradan Çek',
+                icon: const Icon(Icons.videocam_outlined, color: Colors.white),
+                onPressed: () => _pickVideo(ImageSource.camera),
+              ),
+              const SizedBox(height: 8),
+              AppButton(
+                label: 'Galeriden Seç',
+                variant: AppButtonVariant.secondary,
+                icon: const Icon(Icons.photo_library_outlined,
+                    color: AppColors.primary),
+                onPressed: () => _pickVideo(ImageSource.gallery),
+              ),
+            ] else ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.movie_outlined, color: AppColors.primary),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _videoFile!.path.split('/').last,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (_videoSize != null)
+                            Text(
+                              _bytesPretty(_videoSize!),
+                              style: const TextStyle(
+                                  color: AppColors.textSecondary),
+                            ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: isUploading
+                          ? null
+                          : () => setState(() {
+                                _videoFile = null;
+                                _videoSize = null;
+                              }),
+                    ),
+                  ],
+                ),
+              ),
+              if (isUploading) ...[
+                const SizedBox(height: 12),
+                LinearProgressIndicator(value: uploadProgress),
+                const SizedBox(height: 4),
+                Text(
+                  'Yükleniyor ${(uploadProgress * 100).toStringAsFixed(0)}%',
+                  style: const TextStyle(color: AppColors.textSecondary),
+                ),
+              ],
+              const SizedBox(height: 12),
+              AppButton(
+                label: 'Yükle ve Devam Et',
+                isLoading: isUploading,
+                onPressed: isUploading ? null : _upload,
+              ),
+            ],
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.06),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+              ),
+              child: const Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.lock_outline, color: AppColors.primary),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Bu video herkese açık yayınlanmaz. Yalnızca başvurunuzu değerlendiren Köyden Şehre ekibi tarafından görüntülenir.',
+                      style: TextStyle(color: AppColors.primaryDark, height: 1.4),
+                    ),
                   ),
                 ],
               ),
             ),
-            if (state.isUploading) ...[
-              const SizedBox(height: 12),
-              LinearProgressIndicator(value: state.uploadProgress),
-              const SizedBox(height: 4),
-              Text(
-                'Yükleniyor ${(state.uploadProgress * 100).toStringAsFixed(0)}%',
-                style: const TextStyle(color: AppColors.textSecondary),
-              ),
-            ],
-            const SizedBox(height: 12),
-            AppButton(
-              label: 'Yükle ve Devam Et',
-              isLoading: state.isUploading,
-              onPressed: state.isUploading ? null : _upload,
-            ),
-          ],
-          const SizedBox(height: 24),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.06),
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-            child: const Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(height: 16),
+            Row(
               children: [
-                Icon(Icons.lock_outline, color: AppColors.primary),
-                SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    'Bu video herkese açık yayınlanmaz. Yalnızca başvurunuzu değerlendiren Köyden Şehre ekibi tarafından görüntülenir.',
-                    style: TextStyle(color: AppColors.primaryDark, height: 1.4),
+                  child: AppButton(
+                    label: 'Geri',
+                    variant: AppButtonVariant.secondary,
+                    onPressed: isUploading ? null : _back,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: AppButton(
+                    label: 'Şimdilik Geç',
+                    variant: AppButtonVariant.text,
+                    onPressed: isUploading ? null : _skip,
                   ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: AppButton(
-                  label: 'Geri',
-                  variant: AppButtonVariant.secondary,
-                  onPressed: state.isUploading ? null : _back,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: AppButton(
-                  label: 'Şimdilik Geç',
-                  variant: AppButtonVariant.text,
-                  onPressed: state.isUploading ? null : _skip,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 }
 
 // -- STEP 5: Terms & submit -----------------------------------------------
 
-class _StepTerms extends ConsumerStatefulWidget {
+class _StepTerms extends StatefulWidget {
   const _StepTerms();
   @override
-  ConsumerState<_StepTerms> createState() => _StepTermsState();
+  State<_StepTerms> createState() => _StepTermsState();
 }
 
-class _StepTermsState extends ConsumerState<_StepTerms> {
+class _StepTermsState extends State<_StepTerms> {
   bool _kvkk = false;
   bool _platform = false;
   bool _own = false;
@@ -834,7 +850,7 @@ class _StepTermsState extends ConsumerState<_StepTerms> {
   @override
   void initState() {
     super.initState();
-    final d = ref.read(applicationFormProvider).data;
+    final d = _formCtrl().data.value;
     _kvkk = d.kvkkAccepted;
     _platform = d.platformTermsAccepted;
     _own = d.declaresOwnProduction;
@@ -846,100 +862,101 @@ class _StepTermsState extends ConsumerState<_StepTerms> {
       _kvkk && _platform && _own && _location && _notIntermediary;
 
   Future<void> _submit() async {
-    ref.read(applicationFormProvider.notifier).updateData(
-          (d) => d.copyWith(
-            kvkkAccepted: _kvkk,
-            platformTermsAccepted: _platform,
-            declaresOwnProduction: _own,
-            declaresAccurateLocation: _location,
-            declaresNotIntermediary: _notIntermediary,
-          ),
-        );
-    final ok =
-        await ref.read(applicationFormProvider.notifier).submit();
+    _formCtrl().updateData(
+      (d) => d.copyWith(
+        kvkkAccepted: _kvkk,
+        platformTermsAccepted: _platform,
+        declaresOwnProduction: _own,
+        declaresAccurateLocation: _location,
+        declaresNotIntermediary: _notIntermediary,
+      ),
+    );
+    final ok = await _formCtrl().submit();
     if (!mounted) return;
     if (ok) {
       context.go('/apply/success');
     } else {
-      final err = ref.read(applicationFormProvider).errorMessage;
+      final err = _formCtrl().errorMessage.value;
       if (err != null) context.snack(err, isError: true);
     }
   }
 
-  void _back() => ref.read(applicationFormProvider.notifier).previous();
+  void _back() => _formCtrl().previous();
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(applicationFormProvider);
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _CheckTile(
-            value: _kvkk,
-            onChanged: (v) => setState(() => _kvkk = v),
-            text:
-                'KVKK aydınlatma metnini okudum ve kabul ediyorum.',
-          ),
-          _CheckTile(
-            value: _platform,
-            onChanged: (v) => setState(() => _platform = v),
-            text:
-                'Köyden Şehre\'nin ödeme, sipariş, kargo veya uygulama içi mesajlaşma yapmadığını anlıyorum.',
-          ),
-          _CheckTile(
-            value: _own,
-            onChanged: (v) => setState(() => _own = v),
-            text:
-                'Verdiğim bilgilerin doğru olduğunu ve kendi üretimimi sattığımı onaylıyorum.',
-          ),
-          _CheckTile(
-            value: _notIntermediary,
-            onChanged: (v) => setState(() => _notIntermediary = v),
-            text: 'Aracı olmadığımı beyan ediyorum.',
-          ),
-          _CheckTile(
-            value: _location,
-            onChanged: (v) => setState(() => _location = v),
-            text:
-                'Üretim yaptığım konum bilgilerini doğru girdiğimi onaylıyorum.',
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.primaryLight.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(AppRadius.md),
+    return Obx(() {
+      final isSubmitting = _formCtrl().isSubmitting.value;
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _CheckTile(
+              value: _kvkk,
+              onChanged: (v) => setState(() => _kvkk = v),
+              text: 'KVKK aydınlatma metnini okudum ve kabul ediyorum.',
             ),
-            child: const Text(
-              AppConstants.platformInfoText,
-              style: TextStyle(color: AppColors.primaryDark, height: 1.4),
+            _CheckTile(
+              value: _platform,
+              onChanged: (v) => setState(() => _platform = v),
+              text:
+                  'Köyden Şehre\'nin ödeme, sipariş, kargo veya uygulama içi mesajlaşma yapmadığını anlıyorum.',
             ),
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: AppButton(
-                  label: 'Geri',
-                  variant: AppButtonVariant.secondary,
-                  onPressed: state.isSubmitting ? null : _back,
-                ),
+            _CheckTile(
+              value: _own,
+              onChanged: (v) => setState(() => _own = v),
+              text:
+                  'Verdiğim bilgilerin doğru olduğunu ve kendi üretimimi sattığımı onaylıyorum.',
+            ),
+            _CheckTile(
+              value: _notIntermediary,
+              onChanged: (v) => setState(() => _notIntermediary = v),
+              text: 'Aracı olmadığımı beyan ediyorum.',
+            ),
+            _CheckTile(
+              value: _location,
+              onChanged: (v) => setState(() => _location = v),
+              text:
+                  'Üretim yaptığım konum bilgilerini doğru girdiğimi onaylıyorum.',
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primaryLight.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: AppButton(
-                  label: 'Başvuruyu Gönder',
-                  isLoading: state.isSubmitting,
-                  onPressed: _allAccepted && !state.isSubmitting ? _submit : null,
-                ),
+              child: const Text(
+                AppConstants.platformInfoText,
+                style: TextStyle(color: AppColors.primaryDark, height: 1.4),
               ),
-            ],
-          ),
-        ],
-      ),
-    );
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: AppButton(
+                    label: 'Geri',
+                    variant: AppButtonVariant.secondary,
+                    onPressed: isSubmitting ? null : _back,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: AppButton(
+                    label: 'Başvuruyu Gönder',
+                    isLoading: isSubmitting,
+                    onPressed:
+                        _allAccepted && !isSubmitting ? _submit : null,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    });
   }
 }
 
@@ -978,3 +995,7 @@ class _CheckTile extends StatelessWidget {
     );
   }
 }
+
+// Marker import used at top of file
+// ignore: unused_element
+typedef _UnusedRefRepo = CategoryRepository;

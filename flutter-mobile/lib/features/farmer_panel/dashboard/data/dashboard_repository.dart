@@ -1,17 +1,7 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../../../core/api/api_client.dart';
 import '../../../../core/api/api_endpoints.dart';
-import '../../products/models/farmer_product_model.dart';
 import '../../products/data/farmer_product_repository.dart';
 import '../models/dashboard_model.dart';
-
-final dashboardRepositoryProvider = Provider<DashboardRepository>((ref) {
-  return DashboardRepository(
-    api: ref.watch(apiClientProvider),
-    products: ref.watch(farmerProductRepositoryProvider),
-  );
-});
 
 class DashboardRepository {
   final ApiClient api;

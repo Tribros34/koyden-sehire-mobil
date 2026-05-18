@@ -1,74 +1,83 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/theme.dart';
+import '../../../../core/services/auth_service.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_error_widget.dart';
 import '../../../../shared/widgets/app_loading.dart';
 import '../../../../shared/widgets/farmer_bottom_nav.dart';
-import '../../../auth/providers/auth_provider.dart';
-import '../../profile/providers/farmer_profile_provider.dart';
 import '../../products/models/farmer_product_model.dart';
+import '../../profile/providers/farmer_profile_provider.dart';
 import '../models/dashboard_model.dart';
 import '../providers/dashboard_provider.dart';
 
-class FarmerDashboardScreen extends ConsumerWidget {
+class FarmerDashboardScreen extends StatelessWidget {
   const FarmerDashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(dashboardProvider);
-    final profile = ref.watch(farmerProfileProvider).profile;
-    final displayName = profile?.displayName ??
-        ref.watch(authProvider).displayName ??
-        'Üretici';
+  Widget build(BuildContext context) {
+    final dashCtrl = Get.find<DashboardController>();
+    final profileCtrl = Get.find<FarmerProfileController>();
+    final auth = Get.find<AuthService>();
 
     return Scaffold(
       bottomNavigationBar: const FarmerBottomNav(currentIndex: 0),
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: Text('Merhaba, $displayName'),
+        title: Obx(() {
+          final displayName = profileCtrl.profile.value?.displayName ??
+              auth.displayName.value ??
+              'Üretici';
+          return Text('Merhaba, $displayName');
+        }),
         actions: [
-          IconButton(
-            icon: CircleAvatar(
-              radius: 14,
-              backgroundColor: AppColors.background,
-              backgroundImage: profile?.profileImageUrl == null
-                  ? null
-                  : CachedNetworkImageProvider(profile!.profileImageUrl!),
-              child: profile?.profileImageUrl == null
-                  ? const Icon(Icons.person, size: 16)
-                  : null,
-            ),
-            onPressed: () => context.push('/farmer/profile'),
-          ),
+          Obx(() {
+            final profile = profileCtrl.profile.value;
+            return IconButton(
+              icon: CircleAvatar(
+                radius: 14,
+                backgroundColor: AppColors.background,
+                backgroundImage: profile?.profileImageUrl == null
+                    ? null
+                    : CachedNetworkImageProvider(profile!.profileImageUrl!),
+                child: profile?.profileImageUrl == null
+                    ? const Icon(Icons.person, size: 16)
+                    : null,
+              ),
+              onPressed: () => context.push('/farmer/profile'),
+            );
+          }),
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Çıkış Yap',
             onPressed: () async {
-              await ref.read(authProvider.notifier).logout();
+              await auth.logout();
               if (context.mounted) context.go('/');
             },
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(dashboardProvider);
-          await Future.delayed(const Duration(milliseconds: 200));
-        },
-        child: async.when(
-          loading: () => const AppLoading(),
-          error: (e, _) => AppErrorWidget(
-            message: e.toString(),
-            onRetry: () => ref.invalidate(dashboardProvider),
-          ),
-          data: (data) => _Body(data: data),
-        ),
-      ),
+      body: Obx(() {
+        if (dashCtrl.isLoading.value && dashCtrl.data.value == null) {
+          return const AppLoading();
+        }
+        if (dashCtrl.error.value != null && dashCtrl.data.value == null) {
+          return AppErrorWidget(
+            message: dashCtrl.error.value!,
+            onRetry: dashCtrl.load,
+          );
+        }
+        final data = dashCtrl.data.value;
+        if (data == null) return const AppLoading();
+        return RefreshIndicator(
+          onRefresh: dashCtrl.load,
+          child: _Body(data: data),
+        );
+      }),
     );
   }
 }

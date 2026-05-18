@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme.dart';
+import '../../../core/services/auth_service.dart';
 import '../../../shared/widgets/app_button.dart';
-import '../providers/auth_provider.dart';
 
-class AdminWebOnlyScreen extends ConsumerWidget {
+class AdminWebOnlyScreen extends StatelessWidget {
   const AdminWebOnlyScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -38,7 +38,7 @@ class AdminWebOnlyScreen extends ConsumerWidget {
               AppButton(
                 label: 'Çıkış Yap',
                 onPressed: () async {
-                  await ref.read(authProvider.notifier).logout();
+                  await Get.find<AuthService>().logout();
                   if (context.mounted) context.go('/');
                 },
               ),

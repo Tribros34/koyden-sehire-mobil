@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -16,20 +16,39 @@ import '../../../../shared/widgets/founding_badge.dart';
 import '../../../../shared/widgets/image_carousel.dart';
 import '../../../../shared/widgets/verified_badge.dart';
 import '../../farmers/models/farmer_model.dart';
+import '../../products/data/product_repository.dart';
 import '../models/product_model.dart';
 import '../providers/product_detail_provider.dart';
 
-class ProductDetailScreen extends ConsumerStatefulWidget {
+class ProductDetailScreen extends StatefulWidget {
   final String productId;
   const ProductDetailScreen({super.key, required this.productId});
 
   @override
-  ConsumerState<ProductDetailScreen> createState() =>
-      _ProductDetailScreenState();
+  State<ProductDetailScreen> createState() => _ProductDetailScreenState();
 }
 
-class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
+class _ProductDetailScreenState extends State<ProductDetailScreen> {
   bool _phoneRevealed = false;
+  late final ProductDetailController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = Get.put(
+      ProductDetailController(
+        Get.find<ProductRepository>(),
+        productId: widget.productId,
+      ),
+      tag: widget.productId,
+    );
+  }
+
+  @override
+  void dispose() {
+    Get.delete<ProductDetailController>(tag: widget.productId);
+    super.dispose();
+  }
 
   Future<void> _callPhone(String phone) async {
     final uri = Uri(scheme: 'tel', path: phone);
@@ -48,25 +67,28 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final async = ref.watch(productDetailProvider(widget.productId));
-
     return Scaffold(
       appBar: AppBar(title: const Text('Ürün Detayı')),
-      body: async.when(
-        loading: () => const AppLoading(),
-        error: (e, _) => AppErrorWidget(
-          message: e.toString(),
-          onRetry: () =>
-              ref.invalidate(productDetailProvider(widget.productId)),
-        ),
-        data: (product) => _Body(
+      body: Obx(() {
+        if (_ctrl.isLoading.value && _ctrl.product.value == null) {
+          return const AppLoading();
+        }
+        if (_ctrl.error.value != null && _ctrl.product.value == null) {
+          return AppErrorWidget(
+            message: _ctrl.error.value!,
+            onRetry: _ctrl.load,
+          );
+        }
+        final product = _ctrl.product.value;
+        if (product == null) return const AppLoading();
+        return _Body(
           product: product,
           phoneRevealed: _phoneRevealed,
           onReveal: () => setState(() => _phoneRevealed = true),
           onCall: _callPhone,
           onCopy: _copyPhone,
-        ),
-      ),
+        );
+      }),
     );
   }
 }
@@ -132,7 +154,8 @@ class _Body extends StatelessWidget {
                         product.district,
                         if (product.village != null) product.village,
                       ].whereType<String>().join(', '),
-                      style: const TextStyle(color: AppColors.textSecondary),
+                      style:
+                          const TextStyle(color: AppColors.textSecondary),
                     ),
                   ),
                 ],
@@ -142,7 +165,8 @@ class _Body extends StatelessWidget {
               const SizedBox(height: 16),
               Text('Açıklama', style: context.text.titleMedium),
               const SizedBox(height: 8),
-              Text(product.description, style: const TextStyle(height: 1.5)),
+              Text(product.description,
+                  style: const TextStyle(height: 1.5)),
               if (farmer != null) ...[
                 const SizedBox(height: 24),
                 _FarmerCard(farmer: farmer),
@@ -150,10 +174,7 @@ class _Body extends StatelessWidget {
               const SizedBox(height: 24),
               if (product.isAvailable) ...[
                 _ContactActions(
-                  publicPhone: farmer == null
-                      ? null
-                      : null /* phone is not in product list response;
-                         handled via farmer profile fetch on Üreticiyi Gör */,
+                  publicPhone: null,
                   phoneRevealed: phoneRevealed,
                   onReveal: onReveal,
                   onCall: onCall,
@@ -182,7 +203,8 @@ class _Body extends StatelessWidget {
                 ),
                 child: const Text(
                   AppConstants.platformInfoText,
-                  style: TextStyle(color: AppColors.primaryDark, height: 1.4),
+                  style:
+                      TextStyle(color: AppColors.primaryDark, height: 1.4),
                 ),
               ),
               const SizedBox(height: 16),
@@ -191,9 +213,7 @@ class _Body extends StatelessWidget {
                   icon: const Icon(Icons.flag_outlined, size: 16),
                   label: const Text('Uygunsuz İçerik Bildir'),
                   onPressed: () {
-                    context.toast(
-                      'Bildirim alındı. Ekibimiz inceleyecek.',
-                    );
+                    context.toast('Bildirim alındı. Ekibimiz inceleyecek.');
                   },
                 ),
               ),
@@ -292,7 +312,7 @@ class _FarmerCard extends StatelessWidget {
   }
 }
 
-class _ContactActions extends ConsumerWidget {
+class _ContactActions extends StatelessWidget {
   final String? publicPhone;
   final bool phoneRevealed;
   final VoidCallback onReveal;
@@ -310,9 +330,7 @@ class _ContactActions extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // The product list endpoint doesn't include public_phone reliably,
-    // so we always direct to the farmer profile for full contact info.
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

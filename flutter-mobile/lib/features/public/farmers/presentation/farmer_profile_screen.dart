@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../app/theme.dart';
@@ -13,20 +13,39 @@ import '../../../../shared/widgets/app_loading.dart';
 import '../../../../shared/widgets/founding_badge.dart';
 import '../../../../shared/widgets/product_card.dart';
 import '../../../../shared/widgets/verified_badge.dart';
+import '../data/farmer_repository.dart';
 import '../models/farmer_model.dart';
 import '../providers/farmer_provider.dart';
 
-class FarmerProfileScreen extends ConsumerStatefulWidget {
+class FarmerProfileScreen extends StatefulWidget {
   final String farmerId;
   const FarmerProfileScreen({super.key, required this.farmerId});
 
   @override
-  ConsumerState<FarmerProfileScreen> createState() =>
-      _FarmerProfileScreenState();
+  State<FarmerProfileScreen> createState() => _FarmerProfileScreenState();
 }
 
-class _FarmerProfileScreenState extends ConsumerState<FarmerProfileScreen> {
+class _FarmerProfileScreenState extends State<FarmerProfileScreen> {
   bool _phoneRevealed = false;
+  late final FarmerController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = Get.put(
+      FarmerController(
+        Get.find<FarmerRepository>(),
+        farmerId: widget.farmerId,
+      ),
+      tag: widget.farmerId,
+    );
+  }
+
+  @override
+  void dispose() {
+    Get.delete<FarmerController>(tag: widget.farmerId);
+    super.dispose();
+  }
 
   Future<void> _call(String phone) async {
     final uri = Uri(scheme: 'tel', path: phone);
@@ -45,18 +64,21 @@ class _FarmerProfileScreenState extends ConsumerState<FarmerProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final profile = ref.watch(farmerProfileProvider(widget.farmerId));
-    final products = ref.watch(farmerProductsProvider(widget.farmerId));
-
     return Scaffold(
       appBar: AppBar(title: const Text('Üretici')),
-      body: profile.when(
-        loading: () => const AppLoading(),
-        error: (e, _) => AppErrorWidget(
-          message: e.toString(),
-          onRetry: () => ref.invalidate(farmerProfileProvider(widget.farmerId)),
-        ),
-        data: (p) => ListView(
+      body: Obx(() {
+        if (_ctrl.isLoadingProfile.value && _ctrl.profile.value == null) {
+          return const AppLoading();
+        }
+        if (_ctrl.profileError.value != null && _ctrl.profile.value == null) {
+          return AppErrorWidget(
+            message: _ctrl.profileError.value!,
+            onRetry: _ctrl.load,
+          );
+        }
+        final p = _ctrl.profile.value;
+        if (p == null) return const AppLoading();
+        return ListView(
           padding: const EdgeInsets.all(16),
           children: [
             _Header(profile: p),
@@ -75,8 +97,8 @@ class _FarmerProfileScreenState extends ConsumerState<FarmerProfileScreen> {
                   label: 'İletişim Bilgisini Göster',
                   variant: AppButtonVariant.secondary,
                   onPressed: () => setState(() => _phoneRevealed = true),
-                  icon:
-                      const Icon(Icons.phone_outlined, color: AppColors.primary),
+                  icon: const Icon(Icons.phone_outlined,
+                      color: AppColors.primary),
                 )
               else ...[
                 Container(
@@ -125,43 +147,45 @@ class _FarmerProfileScreenState extends ConsumerState<FarmerProfileScreen> {
             const SizedBox(height: 24),
             Text('Ürünleri', style: context.text.titleMedium),
             const SizedBox(height: 8),
-            products.when(
-              loading: () => const Padding(
+            if (_ctrl.isLoadingProducts.value)
+              const Padding(
                 padding: EdgeInsets.all(16),
                 child: Center(child: CircularProgressIndicator()),
-              ),
-              error: (e, _) => Padding(
+              )
+            else if (_ctrl.productsError.value != null)
+              Padding(
                 padding: const EdgeInsets.all(16),
                 child: Text(
                   'Ürünler yüklenemedi',
                   style: TextStyle(color: AppColors.textSecondary),
                 ),
+              )
+            else if (_ctrl.products.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Text(
+                  'Bu üreticinin aktif ürünü yok.',
+                  style: TextStyle(color: AppColors.textSecondary),
+                ),
+              )
+            else
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate:
+                    const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 0.62,
+                ),
+                itemCount: _ctrl.products.length,
+                itemBuilder: (_, i) =>
+                    ProductCard(product: _ctrl.products[i]),
               ),
-              data: (items) => items.isEmpty
-                  ? const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      child: Text(
-                        'Bu üreticinin aktif ürünü yok.',
-                        style: TextStyle(color: AppColors.textSecondary),
-                      ),
-                    )
-                  : GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 12,
-                        crossAxisSpacing: 12,
-                        childAspectRatio: 0.62,
-                      ),
-                      itemCount: items.length,
-                      itemBuilder: (_, i) => ProductCard(product: items[i]),
-                    ),
-            ),
           ],
-        ),
-      ),
+        );
+      }),
     );
   }
 }
@@ -180,7 +204,8 @@ class _Header extends StatelessWidget {
               ? null
               : CachedNetworkImageProvider(profile.profileImageUrl!),
           child: profile.profileImageUrl == null
-              ? const Icon(Icons.person, size: 56, color: AppColors.textSecondary)
+              ? const Icon(Icons.person,
+                  size: 56, color: AppColors.textSecondary)
               : null,
         ),
         const SizedBox(height: 12),
@@ -198,7 +223,8 @@ class _Header extends StatelessWidget {
             if (profile.isFoundingFarmer) const FoundingBadge(small: false),
             if (profile.isVerified) const VerifiedBadge(small: false),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: AppColors.background,
                 borderRadius: BorderRadius.circular(8),

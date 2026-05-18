@@ -1,25 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart' hide Trans;
 
-import '../core/network/network_info.dart';
+import '../core/services/connectivity_service.dart';
 import 'constants.dart';
 import 'router.dart';
 import 'theme.dart';
 
-class KoydenSehireApp extends ConsumerWidget {
+class KoydenSehireApp extends StatelessWidget {
   const KoydenSehireApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final router = ref.watch(goRouterProvider);
-    final connectivity = ref.watch(connectivityProvider);
-
+  Widget build(BuildContext context) {
     return MaterialApp.router(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
-      routerConfig: router,
+      routerConfig: AppRouter.router,
       locale: const Locale('tr', 'TR'),
       supportedLocales: const [Locale('tr', 'TR')],
       localizationsDelegates: const [
@@ -28,17 +25,15 @@ class KoydenSehireApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       builder: (context, child) {
-        final offline = connectivity.maybeWhen(
-          data: (online) => !online,
-          orElse: () => false,
-        );
-        return Stack(
-          children: [
-            child ?? const SizedBox.shrink(),
-            if (offline)
-              const _OfflineBanner(),
-          ],
-        );
+        return Obx(() {
+          final offline = !Get.find<ConnectivityService>().isOnline.value;
+          return Stack(
+            children: [
+              child ?? const SizedBox.shrink(),
+              if (offline) const _OfflineBanner(),
+            ],
+          );
+        });
       },
     );
   }
@@ -48,14 +43,14 @@ class _OfflineBanner extends StatelessWidget {
   const _OfflineBanner();
   @override
   Widget build(BuildContext context) {
-    return Positioned(
+    return const Positioned(
       top: 0,
       left: 0,
       right: 0,
       child: SafeArea(
         child: Material(
           color: AppColors.error,
-          child: const Padding(
+          child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             child: Row(
               children: [

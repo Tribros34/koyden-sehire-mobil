@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../features/auth/providers/auth_provider.dart';
+import '../../../../core/services/auth_service.dart';
 
-class AdminShell extends ConsumerWidget {
+class AdminShell extends StatelessWidget {
   final Widget child;
   final String currentLocation;
 
@@ -15,7 +15,7 @@ class AdminShell extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Yönetim Paneli'),
@@ -23,9 +23,7 @@ class AdminShell extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Çıkış',
-            onPressed: () async {
-              await ref.read(authProvider.notifier).logout();
-            },
+            onPressed: () => Get.find<AuthService>().logout(),
           ),
         ],
       ),
@@ -98,6 +96,24 @@ class _AdminDrawer extends StatelessWidget {
                   icon: Icons.category_outlined,
                   label: 'Kategoriler',
                   route: '/admin/categories',
+                  currentLocation: currentLocation,
+                ),
+                _NavItem(
+                  icon: Icons.people_outline,
+                  label: 'Üreticiler',
+                  route: '/admin/farmers',
+                  currentLocation: currentLocation,
+                ),
+                _NavItem(
+                  icon: Icons.map_outlined,
+                  label: 'Şehir Yoğunluğu',
+                  route: '/admin/map',
+                  currentLocation: currentLocation,
+                ),
+                _NavItem(
+                  icon: Icons.account_tree_outlined,
+                  label: 'Davet Ağı',
+                  route: '/admin/invite-network',
                   currentLocation: currentLocation,
                 ),
               ],

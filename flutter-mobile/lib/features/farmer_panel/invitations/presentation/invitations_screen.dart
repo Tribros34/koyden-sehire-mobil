@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../app/theme.dart';
@@ -14,50 +14,51 @@ import '../../../../shared/widgets/farmer_bottom_nav.dart';
 import '../models/invitation_model.dart';
 import '../providers/invitation_provider.dart';
 
-class InvitationsScreen extends ConsumerWidget {
+class InvitationsScreen extends StatelessWidget {
   const InvitationsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(invitationListProvider);
+  Widget build(BuildContext context) {
+    final ctrl = Get.find<InvitationController>();
     return Scaffold(
       appBar: AppBar(title: const Text('Davetlerim')),
       bottomNavigationBar: const FarmerBottomNav(currentIndex: 2),
-      body: RefreshIndicator(
-        onRefresh: () async => ref.invalidate(invitationListProvider),
-        child: async.when(
-          loading: () => const AppLoading(),
-          error: (e, _) => AppErrorWidget(
-            message: e.toString(),
-            onRetry: () => ref.invalidate(invitationListProvider),
-          ),
-          data: (codes) {
-            if (codes.isEmpty) {
-              return const AppEmptyWidget(
-                message: 'Henüz aktif davet kodunuz yok.',
-                icon: Icons.card_giftcard_outlined,
-              );
-            }
-            return ListView(
-              padding: const EdgeInsets.all(16),
-              children: codes.expand((c) => [
-                    _InviteCard(item: c),
-                    const SizedBox(height: 16),
-                    if (c.invited.isNotEmpty) _InvitedList(invited: c.invited),
-                    if (c.invited.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Text(
-                          'Henüz davet ettiğiniz kimse yok.',
-                          style: TextStyle(color: AppColors.textSecondary),
-                        ),
+      body: Obx(() {
+        if (ctrl.isLoading.value) return const AppLoading();
+        if (ctrl.error.value != null) {
+          return AppErrorWidget(
+            message: ctrl.error.value!,
+            onRetry: ctrl.load,
+          );
+        }
+        final codes = ctrl.items;
+        if (codes.isEmpty) {
+          return const AppEmptyWidget(
+            message: 'Henüz aktif davet kodunuz yok.',
+            icon: Icons.card_giftcard_outlined,
+          );
+        }
+        return RefreshIndicator(
+          onRefresh: ctrl.load,
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: codes.expand((c) => [
+                  _InviteCard(item: c),
+                  const SizedBox(height: 16),
+                  if (c.invited.isNotEmpty) _InvitedList(invited: c.invited),
+                  if (c.invited.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Text(
+                        'Henüz davet ettiğiniz kimse yok.',
+                        style: TextStyle(color: AppColors.textSecondary),
                       ),
-                    const SizedBox(height: 24),
-                  ]).toList(),
-            );
-          },
-        ),
-      ),
+                    ),
+                  const SizedBox(height: 24),
+                ]).toList(),
+          ),
+        );
+      }),
     );
   }
 }

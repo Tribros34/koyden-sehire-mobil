@@ -1,33 +1,29 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/constants.dart';
 import '../../../../app/theme.dart';
+import '../../../../core/services/auth_service.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/category_chip.dart';
 import '../../../../shared/widgets/farmer_card.dart';
 import '../../../../shared/widgets/product_card.dart';
 import '../../../../shared/widgets/shimmer_product_card.dart';
-import '../../../auth/providers/auth_provider.dart';
 import '../../../auth/providers/auth_state.dart';
 import '../../categories/models/category_model.dart';
 import '../../categories/providers/category_provider.dart';
 import '../../farmers/models/farmer_model.dart';
-import '../providers/home_provider.dart';
+import '../../home/providers/home_provider.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final categories = ref.watch(categoryTreeProvider);
-    final products = ref.watch(homeNewProductsProvider);
-    final farmers = ref.watch(featuredFarmersProvider);
-    final auth = ref.watch(authProvider);
-
-    final isFarmer = auth.status == AuthStatus.farmerActive;
-    final isAdmin = auth.status == AuthStatus.admin;
+  Widget build(BuildContext context) {
+    final catCtrl = Get.find<CategoryController>();
+    final homeCtrl = Get.find<HomeController>();
+    final auth = Get.find<AuthService>();
 
     return Scaffold(
       appBar: AppBar(
@@ -39,40 +35,46 @@ class HomeScreen extends ConsumerWidget {
           ],
         ),
         actions: [
-          if (isFarmer)
-            TextButton.icon(
-              onPressed: () => context.go('/farmer/dashboard'),
-              icon: const Icon(Icons.dashboard_outlined, size: 18),
-              label: const Text('Panelim'),
-            )
-          else if (isAdmin)
-            TextButton.icon(
-              onPressed: () => context.go('/admin'),
-              icon: const Icon(Icons.admin_panel_settings_outlined, size: 18),
-              label: const Text('Admin'),
-            )
-          else
-            TextButton.icon(
-              onPressed: () => context.push('/login'),
-              icon: const Icon(Icons.login_outlined, size: 18),
-              label: const Text('Giriş'),
-            ),
+          Obx(() {
+            final status = auth.status.value;
+            final isFarmer = status == AuthStatus.farmerActive;
+            final isAdmin = status == AuthStatus.admin;
+            if (isFarmer) {
+              return TextButton.icon(
+                onPressed: () => context.go('/farmer/dashboard'),
+                icon: const Icon(Icons.dashboard_outlined, size: 18),
+                label: const Text('Panelim'),
+              );
+            } else if (isAdmin) {
+              return TextButton.icon(
+                onPressed: () => context.go('/admin'),
+                icon: const Icon(Icons.admin_panel_settings_outlined, size: 18),
+                label: const Text('Admin'),
+              );
+            } else {
+              return TextButton.icon(
+                onPressed: () => context.push('/login'),
+                icon: const Icon(Icons.login_outlined, size: 18),
+                label: const Text('Giriş'),
+              );
+            }
+          }),
           const SizedBox(width: 8),
         ],
       ),
-      bottomNavigationBar: _PublicBottomNav(auth: auth),
+      bottomNavigationBar: Obx(() {
+        final isFarmer = auth.status.value == AuthStatus.farmerActive;
+        return _PublicBottomNav(isFarmer: isFarmer);
+      }),
       body: RefreshIndicator(
         onRefresh: () async {
-          ref.invalidate(homeNewProductsProvider);
-          ref.invalidate(categoryTreeProvider);
+          homeCtrl.load();
+          catCtrl.load();
         },
         child: CustomScrollView(
-          // Clamp instead of bounce — prevents iOS overscroll from locking scroll
           physics: const ClampingScrollPhysics(),
           slivers: [
             const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-            // Search bar
             const SliverToBoxAdapter(child: _HeroSearchBar()),
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
@@ -85,20 +87,24 @@ class HomeScreen extends ConsumerWidget {
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 8)),
             SliverToBoxAdapter(
-              child: categories.when(
-                loading: () => const SizedBox(
-                  height: 48,
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-                error: (_, __) => const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    'Kategoriler yüklenemedi',
-                    style: TextStyle(color: AppColors.textSecondary),
-                  ),
-                ),
-                data: (list) => _CategoryRow(categories: list),
-              ),
+              child: Obx(() {
+                if (catCtrl.isLoading.value) {
+                  return const SizedBox(
+                    height: 48,
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+                if (catCtrl.error.value != null) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      'Kategoriler yüklenemedi',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
+                  );
+                }
+                return _CategoryRow(categories: catCtrl.categories);
+              }),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
@@ -111,79 +117,88 @@ class HomeScreen extends ConsumerWidget {
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 8)),
             SliverToBoxAdapter(
-              child: products.when(
-                loading: () => const SizedBox(
-                  height: 240,
-                  child: _HorizontalShimmer(),
-                ),
-                error: (_, __) => const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    'Ürünler yüklenemedi',
-                    style: TextStyle(color: AppColors.textSecondary),
-                  ),
-                ),
-                data: (items) => items.isEmpty
-                    ? const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          'Henüz ürün bulunmuyor.',
-                          style: TextStyle(color: AppColors.textSecondary),
-                        ),
-                      )
-                    : SizedBox(
-                        height: 270,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          // Clamping prevents horizontal overscroll from eating
-                          // the parent's vertical gesture recognizer
-                          physics: const ClampingScrollPhysics(),
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: items.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(width: 12),
-                          itemBuilder: (_, i) => SizedBox(
-                            width: 160,
-                            child:
-                                ProductCard(product: items[i], compact: true),
-                          ),
-                        ),
-                      ),
-              ),
-            ),
-
-            // Featured farmers
-            if (farmers.isNotEmpty) ...[
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-              const SliverToBoxAdapter(
-                child: _SectionHeader(title: 'Öne Çıkan Üreticiler'),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 8)),
-              SliverToBoxAdapter(
-                child: SizedBox(
-                  height: 180,
+              child: Obx(() {
+                if (homeCtrl.isLoading.value) {
+                  return const SizedBox(
+                    height: 240,
+                    child: _HorizontalShimmer(),
+                  );
+                }
+                if (homeCtrl.error.value != null) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      'Ürünler yüklenemedi',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
+                  );
+                }
+                final items = homeCtrl.newProducts;
+                if (items.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      'Henüz ürün bulunmuyor.',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
+                  );
+                }
+                return SizedBox(
+                  height: 270,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     physics: const ClampingScrollPhysics(),
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: farmers.length,
+                    itemCount: items.length,
                     separatorBuilder: (_, __) => const SizedBox(width: 12),
-                    itemBuilder: (_, i) =>
-                        FarmerCard(farmer: farmers[i] as FarmerSummary),
+                    itemBuilder: (_, i) => SizedBox(
+                      width: 160,
+                      child: ProductCard(product: items[i], compact: true),
+                    ),
                   ),
-                ),
-              ),
-            ],
+                );
+              }),
+            ),
 
-            // Platform info + CTA
+            // Featured farmers
+            SliverToBoxAdapter(
+              child: Obx(() {
+                final farmers = homeCtrl.featuredFarmers;
+                if (farmers.isEmpty) return const SizedBox.shrink();
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 24),
+                    const _SectionHeader(title: 'Öne Çıkan Üreticiler'),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 180,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        physics: const ClampingScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: farmers.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 12),
+                        itemBuilder: (_, i) =>
+                            FarmerCard(farmer: farmers[i] as FarmerSummary),
+                      ),
+                    ),
+                  ],
+                );
+              }),
+            ),
+
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
             const SliverToBoxAdapter(child: _PlatformInfoCard()),
             const SliverToBoxAdapter(child: SizedBox(height: 16)),
             SliverToBoxAdapter(
-              child: isFarmer
-                  ? const _FarmerPanelCtaCard()
-                  : const _GuestCtaCard(),
+              child: Obx(() {
+                final isFarmer =
+                    auth.status.value == AuthStatus.farmerActive;
+                return isFarmer
+                    ? const _FarmerPanelCtaCard()
+                    : const _GuestCtaCard();
+              }),
             ),
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
           ],
@@ -196,12 +211,11 @@ class HomeScreen extends ConsumerWidget {
 // ---------------------------------------------------------------------------
 
 class _PublicBottomNav extends StatelessWidget {
-  final AuthState auth;
-  const _PublicBottomNav({required this.auth});
+  final bool isFarmer;
+  const _PublicBottomNav({required this.isFarmer});
 
   @override
   Widget build(BuildContext context) {
-    final isFarmer = auth.status == AuthStatus.farmerActive;
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
       currentIndex: 0,
@@ -237,10 +251,9 @@ class _PublicBottomNav extends StatelessWidget {
           label: 'Başvur',
         ),
         BottomNavigationBarItem(
-          icon:
-              Icon(isFarmer ? Icons.dashboard_outlined : Icons.login_outlined),
-          activeIcon:
-              Icon(isFarmer ? Icons.dashboard : Icons.login),
+          icon: Icon(
+              isFarmer ? Icons.dashboard_outlined : Icons.login_outlined),
+          activeIcon: Icon(isFarmer ? Icons.dashboard : Icons.login),
           label: isFarmer ? 'Panelim' : 'Giriş Yap',
         ),
       ],
@@ -263,8 +276,7 @@ class _HeroSearchBar extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.md),
           onTap: () => context.push('/search'),
           child: Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               border: Border.all(color: AppColors.border),
               borderRadius: BorderRadius.circular(AppRadius.md),

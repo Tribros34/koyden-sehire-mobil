@@ -1,27 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 
 import '../../../data/models/admin_category_model.dart';
 import '../../../data/repositories/admin_repository.dart';
 import '../controllers/admin_categories_controller.dart';
 
-class AdminCategoriesView extends ConsumerStatefulWidget {
+class AdminCategoriesView extends StatefulWidget {
   const AdminCategoriesView({super.key});
 
   @override
-  ConsumerState<AdminCategoriesView> createState() =>
+  State<AdminCategoriesView> createState() =>
       _AdminCategoriesViewState();
 }
 
 class _AdminCategoriesViewState
-    extends ConsumerState<AdminCategoriesView> {
+    extends State<AdminCategoriesView> {
   late final AdminCategoriesController _ctrl;
 
   @override
   void initState() {
     super.initState();
-    final repo = ref.read(adminRepositoryProvider);
+    final repo = Get.find<AdminRepository>();
     _ctrl = Get.put(AdminCategoriesController(repo));
   }
 

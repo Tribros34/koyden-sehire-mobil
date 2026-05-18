@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 
@@ -10,23 +9,23 @@ import '../../../shared/widgets/admin_status_badge.dart';
 import '../controllers/admin_application_detail_controller.dart';
 import '../../../../../core/utils/date_formatter.dart' show AppFormatters;
 
-class AdminApplicationDetailView extends ConsumerStatefulWidget {
+class AdminApplicationDetailView extends StatefulWidget {
   final String appId;
   const AdminApplicationDetailView({super.key, required this.appId});
 
   @override
-  ConsumerState<AdminApplicationDetailView> createState() =>
+  State<AdminApplicationDetailView> createState() =>
       _AdminApplicationDetailViewState();
 }
 
 class _AdminApplicationDetailViewState
-    extends ConsumerState<AdminApplicationDetailView> {
+    extends State<AdminApplicationDetailView> {
   late final AdminApplicationDetailController _ctrl;
 
   @override
   void initState() {
     super.initState();
-    final repo = ref.read(adminRepositoryProvider);
+    final repo = Get.find<AdminRepository>();
     _ctrl = Get.put(
         AdminApplicationDetailController(repo, appId: widget.appId));
   }

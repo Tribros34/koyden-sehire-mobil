@@ -1,121 +1,78 @@
 import 'dart:io';
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 
 import '../../../core/errors/app_exception.dart';
 import '../data/application_repository.dart';
 import '../models/application_model.dart';
 
-class ApplicationFormState {
-  final InviteInfo? invite;
-  final ApplicationFormData data;
-  final int currentStep; // 0..4
-  final bool phoneVerified;
-  final bool isUploading;
-  final double uploadProgress;
-  final bool isSubmitting;
-  final String? errorMessage;
-  final bool submitted;
-
-  const ApplicationFormState({
-    this.invite,
-    this.data = const ApplicationFormData(),
-    this.currentStep = 0,
-    this.phoneVerified = false,
-    this.isUploading = false,
-    this.uploadProgress = 0,
-    this.isSubmitting = false,
-    this.errorMessage,
-    this.submitted = false,
-  });
-
-  ApplicationFormState copyWith({
-    InviteInfo? invite,
-    ApplicationFormData? data,
-    int? currentStep,
-    bool? phoneVerified,
-    bool? isUploading,
-    double? uploadProgress,
-    bool? isSubmitting,
-    String? errorMessage,
-    bool? submitted,
-    bool clearError = false,
-  }) =>
-      ApplicationFormState(
-        invite: invite ?? this.invite,
-        data: data ?? this.data,
-        currentStep: currentStep ?? this.currentStep,
-        phoneVerified: phoneVerified ?? this.phoneVerified,
-        isUploading: isUploading ?? this.isUploading,
-        uploadProgress: uploadProgress ?? this.uploadProgress,
-        isSubmitting: isSubmitting ?? this.isSubmitting,
-        errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
-        submitted: submitted ?? this.submitted,
-      );
-}
-
-final applicationFormProvider = StateNotifierProvider<ApplicationFormController,
-    ApplicationFormState>((ref) {
-  return ApplicationFormController(ref.watch(applicationRepositoryProvider));
-});
-
-class ApplicationFormController extends StateNotifier<ApplicationFormState> {
+class ApplicationFormController extends GetxController {
   final ApplicationRepository _repo;
-  ApplicationFormController(this._repo) : super(const ApplicationFormState());
+  ApplicationFormController(this._repo);
+
+  final Rxn<InviteInfo> invite = Rxn<InviteInfo>();
+  final Rx<ApplicationFormData> data = const ApplicationFormData().obs;
+  final RxInt currentStep = 0.obs; // 0..4
+  final RxBool phoneVerified = false.obs;
+  final RxBool isUploading = false.obs;
+  final RxDouble uploadProgress = 0.0.obs;
+  final RxBool isSubmitting = false.obs;
+  final RxnString errorMessage = RxnString();
+  final RxBool submitted = false.obs;
 
   void setInvite(InviteInfo info) {
-    state = state.copyWith(invite: info);
+    invite.value = info;
   }
 
   void updateData(ApplicationFormData Function(ApplicationFormData d) update) {
-    state = state.copyWith(data: update(state.data));
+    data.value = update(data.value);
   }
 
   void setPhoneVerified(bool verified) {
-    state = state.copyWith(phoneVerified: verified);
+    phoneVerified.value = verified;
   }
 
   void goToStep(int step) {
-    state = state.copyWith(currentStep: step);
+    currentStep.value = step;
   }
 
   void next() {
-    if (state.currentStep < 4) {
-      state = state.copyWith(currentStep: state.currentStep + 1);
-    }
+    if (currentStep.value < 4) currentStep.value = currentStep.value + 1;
   }
 
   void previous() {
-    if (state.currentStep > 0) {
-      state = state.copyWith(currentStep: state.currentStep - 1);
-    }
+    if (currentStep.value > 0) currentStep.value = currentStep.value - 1;
   }
 
   void reset() {
-    state = const ApplicationFormState();
+    invite.value = null;
+    data.value = const ApplicationFormData();
+    currentStep.value = 0;
+    phoneVerified.value = false;
+    isUploading.value = false;
+    uploadProgress.value = 0;
+    isSubmitting.value = false;
+    errorMessage.value = null;
+    submitted.value = false;
   }
 
   Future<bool> uploadVideo(File file, {String contentType = 'video/mp4'}) async {
-    final invite = state.invite;
-    if (invite == null) return false;
-    state = state.copyWith(
-      isUploading: true,
-      uploadProgress: 0,
-      clearError: true,
-    );
+    final inv = invite.value;
+    if (inv == null) return false;
+    isUploading.value = true;
+    uploadProgress.value = 0;
+    errorMessage.value = null;
     try {
       final presigned = await _repo.getVideoPresignedUrl(
-        phone: state.data.phone,
-        inviteCode: invite.code,
+        phone: data.value.phone,
+        inviteCode: inv.code,
         contentType: contentType,
       );
       if (presigned.uploadUrl.isEmpty) {
         // No-op storage provider in dev — accept gracefully and skip upload.
-        state = state.copyWith(
-          isUploading: false,
-          errorMessage:
-              'Sunucuda video depolama yapılandırılmamış. Şimdilik geçebilirsiniz.',
-        );
+        errorMessage.value =
+            'Sunucuda video depolama yapılandırılmamış. Şimdilik geçebilirsiniz.';
+        isUploading.value = false;
         return false;
       }
       await _repo.uploadVideoToPresigned(
@@ -123,36 +80,34 @@ class ApplicationFormController extends StateNotifier<ApplicationFormState> {
         file: file,
         contentType: contentType,
         onProgress: (sent, total) {
-          if (total > 0) {
-            state = state.copyWith(uploadProgress: sent / total);
-          }
+          if (total > 0) uploadProgress.value = sent / total;
         },
       );
-      state = state.copyWith(
-        isUploading: false,
-        uploadProgress: 1,
-        data: state.data.copyWith(applicationVideoKey: presigned.key),
-      );
+      uploadProgress.value = 1;
+      data.value =
+          data.value.copyWith(applicationVideoKey: presigned.key);
+      isUploading.value = false;
       return true;
     } on AppException catch (e) {
-      state = state.copyWith(isUploading: false, errorMessage: e.message);
+      errorMessage.value = e.message;
+      isUploading.value = false;
       return false;
     } catch (_) {
-      state = state.copyWith(
-        isUploading: false,
-        errorMessage: 'Video yüklenemedi',
-      );
+      errorMessage.value = 'Video yüklenemedi';
+      isUploading.value = false;
       return false;
     }
   }
 
   Future<bool> submit() async {
-    final invite = state.invite;
-    if (invite == null) return false;
-    state = state.copyWith(isSubmitting: true, clearError: true);
+    final inv = invite.value;
+    if (inv == null) return false;
+    isSubmitting.value = true;
+    errorMessage.value = null;
     try {
-      await _repo.submit(inviteCode: invite.code, data: state.data);
-      state = state.copyWith(isSubmitting: false, submitted: true);
+      await _repo.submit(inviteCode: inv.code, data: data.value);
+      isSubmitting.value = false;
+      submitted.value = true;
       return true;
     } on AppException catch (e) {
       String msg = e.message;
@@ -160,13 +115,12 @@ class ApplicationFormController extends StateNotifier<ApplicationFormState> {
         msg =
             'Bu telefon numarasıyla aktif bir başvuru bulunuyor veya kayıtlı bir hesap mevcut.';
       }
-      state = state.copyWith(isSubmitting: false, errorMessage: msg);
+      errorMessage.value = msg;
+      isSubmitting.value = false;
       return false;
     } catch (_) {
-      state = state.copyWith(
-        isSubmitting: false,
-        errorMessage: 'Başvuru gönderilemedi',
-      );
+      errorMessage.value = 'Başvuru gönderilemedi';
+      isSubmitting.value = false;
       return false;
     }
   }

@@ -1,90 +1,64 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 
 import '../../../../core/errors/app_exception.dart';
 import '../../products/data/farmer_product_repository.dart';
 import '../data/farmer_profile_repository.dart';
 import '../models/farmer_profile_edit_model.dart';
 
-class FarmerProfileState {
-  final FarmerProfileEdit? profile;
-  final bool isLoading;
-  final bool isSaving;
-  final bool isUploadingImage;
-  final String? errorMessage;
-  final bool saved;
-
-  const FarmerProfileState({
-    this.profile,
-    this.isLoading = false,
-    this.isSaving = false,
-    this.isUploadingImage = false,
-    this.errorMessage,
-    this.saved = false,
-  });
-
-  FarmerProfileState copyWith({
-    FarmerProfileEdit? profile,
-    bool? isLoading,
-    bool? isSaving,
-    bool? isUploadingImage,
-    String? errorMessage,
-    bool? saved,
-    bool clearError = false,
-  }) =>
-      FarmerProfileState(
-        profile: profile ?? this.profile,
-        isLoading: isLoading ?? this.isLoading,
-        isSaving: isSaving ?? this.isSaving,
-        isUploadingImage: isUploadingImage ?? this.isUploadingImage,
-        errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
-        saved: saved ?? this.saved,
-      );
-}
-
-final farmerProfileProvider =
-    StateNotifierProvider<FarmerProfileController, FarmerProfileState>((ref) {
-  return FarmerProfileController(
-    profileRepo: ref.watch(farmerProfileRepositoryProvider),
-    productRepo: ref.watch(farmerProductRepositoryProvider),
-  );
-});
-
-class FarmerProfileController extends StateNotifier<FarmerProfileState> {
+class FarmerProfileController extends GetxController {
   final FarmerProfileRepository profileRepo;
   final FarmerProductRepository productRepo;
 
   FarmerProfileController({
     required this.profileRepo,
     required this.productRepo,
-  }) : super(const FarmerProfileState()) {
+  });
+
+  final Rxn<FarmerProfileEdit> profile = Rxn<FarmerProfileEdit>();
+  final RxBool isLoading = false.obs;
+  final RxBool isSaving = false.obs;
+  final RxBool isUploadingImage = false.obs;
+  final RxnString errorMessage = RxnString();
+  final RxBool saved = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
     load();
   }
 
   Future<void> load() async {
-    state = state.copyWith(isLoading: true, clearError: true);
+    isLoading.value = true;
+    errorMessage.value = null;
     try {
-      final p = await profileRepo.get();
-      state = state.copyWith(profile: p, isLoading: false);
+      profile.value = await profileRepo.get();
     } on AppException catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.message);
+      errorMessage.value = e.message;
+    } finally {
+      isLoading.value = false;
     }
   }
 
   void edit(FarmerProfileEdit Function(FarmerProfileEdit) updater) {
-    if (state.profile == null) return;
-    state = state.copyWith(profile: updater(state.profile!));
+    final p = profile.value;
+    if (p == null) return;
+    profile.value = updater(p);
   }
 
   Future<bool> save() async {
-    if (state.profile == null) return false;
-    state = state.copyWith(isSaving: true, clearError: true);
+    final p = profile.value;
+    if (p == null) return false;
+    isSaving.value = true;
+    errorMessage.value = null;
     try {
-      await profileRepo.update(state.profile!);
-      state = state.copyWith(isSaving: false, saved: true);
+      await profileRepo.update(p);
+      saved.value = true;
       return true;
     } on AppException catch (e) {
-      state = state.copyWith(isSaving: false, errorMessage: e.message);
+      errorMessage.value = e.message;
       return false;
+    } finally {
+      isSaving.value = false;
     }
   }
 
@@ -93,27 +67,24 @@ class FarmerProfileController extends StateNotifier<FarmerProfileState> {
     String filename = 'photo.jpg',
     String contentType = 'image/jpeg',
   }) async {
-    state = state.copyWith(isUploadingImage: true, clearError: true);
+    isUploadingImage.value = true;
+    errorMessage.value = null;
     try {
       final url = await productRepo.uploadProfileImage(
         bytes,
         filename: filename,
         contentType: contentType,
       );
-      state = state.copyWith(
-        isUploadingImage: false,
-        profile: state.profile?.copyWith(profileImageUrl: url),
-      );
+      profile.value = profile.value?.copyWith(profileImageUrl: url);
       return true;
     } on AppException catch (e) {
-      state = state.copyWith(isUploadingImage: false, errorMessage: e.message);
+      errorMessage.value = e.message;
       return false;
     } catch (_) {
-      state = state.copyWith(
-        isUploadingImage: false,
-        errorMessage: 'Görsel yüklenemedi',
-      );
+      errorMessage.value = 'Görsel yüklenemedi';
       return false;
+    } finally {
+      isUploadingImage.value = false;
     }
   }
 }

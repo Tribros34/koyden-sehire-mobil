@@ -1,31 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/theme.dart';
+import '../../../core/services/auth_service.dart';
 import '../../../core/utils/validators.dart';
 import '../../../shared/extensions/context_extensions.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_text_field.dart';
-import '../providers/auth_provider.dart';
 import '../providers/auth_state.dart';
 
-class LoginScreen extends ConsumerStatefulWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
-  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscure = true;
 
+  AuthService get _auth => Get.find<AuthService>();
+
+  Worker? _errorWorker;
+  Worker? _statusWorker;
+
+  @override
+  void initState() {
+    super.initState();
+    _errorWorker = ever<String?>(_auth.errorMessage, (msg) {
+      if (msg != null && mounted) {
+        context.snack(msg, isError: true);
+      }
+    });
+    _statusWorker = ever<AuthStatus>(_auth.status, (s) {
+      if (!mounted) return;
+      if (s == AuthStatus.farmerActive) {
+        context.go('/farmer/dashboard');
+      } else if (s == AuthStatus.admin) {
+        context.go('/admin');
+      }
+    });
+  }
+
   @override
   void dispose() {
+    _errorWorker?.dispose();
+    _statusWorker?.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -34,30 +59,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     FocusScope.of(context).unfocus();
-    await ref.read(authProvider.notifier).login(
-          phone: _phoneController.text.trim(),
-          password: _passwordController.text,
-        );
+    await _auth.login(
+      phone: _phoneController.text.trim(),
+      password: _passwordController.text,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<AuthState>(authProvider, (prev, next) {
-      if (next.errorMessage != null && next.errorMessage != prev?.errorMessage) {
-        context.snack(next.errorMessage!, isError: true);
-      }
-      if (next.status == AuthStatus.farmerActive &&
-          prev?.status != AuthStatus.farmerActive) {
-        context.go('/farmer/dashboard');
-      }
-      if (next.status == AuthStatus.admin &&
-          prev?.status != AuthStatus.admin) {
-        context.go('/admin');
-      }
-    });
-
-    final auth = ref.watch(authProvider);
-
     return Scaffold(
       appBar: AppBar(title: const Text('Giriş Yap')),
       body: SafeArea(
@@ -107,11 +116,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                AppButton(
-                  label: 'Giriş Yap',
-                  isLoading: auth.isSubmitting,
-                  onPressed: auth.isSubmitting ? null : _submit,
-                ),
+                Obx(() => AppButton(
+                      label: 'Giriş Yap',
+                      isLoading: _auth.isSubmitting.value,
+                      onPressed: _auth.isSubmitting.value ? null : _submit,
+                    )),
                 const SizedBox(height: 24),
                 Center(
                   child: TextButton(

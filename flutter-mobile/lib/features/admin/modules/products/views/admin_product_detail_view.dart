@@ -1,6 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 
@@ -8,23 +7,23 @@ import '../../../data/repositories/admin_repository.dart';
 import '../../../shared/widgets/admin_status_badge.dart';
 import '../controllers/admin_product_detail_controller.dart';
 
-class AdminProductDetailView extends ConsumerStatefulWidget {
+class AdminProductDetailView extends StatefulWidget {
   final String productId;
   const AdminProductDetailView({super.key, required this.productId});
 
   @override
-  ConsumerState<AdminProductDetailView> createState() =>
+  State<AdminProductDetailView> createState() =>
       _AdminProductDetailViewState();
 }
 
 class _AdminProductDetailViewState
-    extends ConsumerState<AdminProductDetailView> {
+    extends State<AdminProductDetailView> {
   late final AdminProductDetailController _ctrl;
 
   @override
   void initState() {
     super.initState();
-    final repo = ref.read(adminRepositoryProvider);
+    final repo = Get.find<AdminRepository>();
     _ctrl = Get.put(
         AdminProductDetailController(repo, productId: widget.productId));
   }

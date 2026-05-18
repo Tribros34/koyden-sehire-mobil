@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 
@@ -9,23 +8,23 @@ import '../../../shared/widgets/admin_status_badge.dart';
 import '../controllers/admin_applications_controller.dart';
 import '../../../../../core/utils/date_formatter.dart' show AppFormatters;
 
-class AdminApplicationsView extends ConsumerStatefulWidget {
+class AdminApplicationsView extends StatefulWidget {
   const AdminApplicationsView({super.key});
 
   @override
-  ConsumerState<AdminApplicationsView> createState() =>
+  State<AdminApplicationsView> createState() =>
       _AdminApplicationsViewState();
 }
 
 class _AdminApplicationsViewState
-    extends ConsumerState<AdminApplicationsView> {
+    extends State<AdminApplicationsView> {
   late final AdminApplicationsController _ctrl;
   final _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    final repo = ref.read(adminRepositoryProvider);
+    final repo = Get.find<AdminRepository>();
     _ctrl = Get.put(AdminApplicationsController(repo));
   }
 

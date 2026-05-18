@@ -1,6 +1,5 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 
 import '../../../data/models/admin_dashboard_model.dart';
@@ -8,21 +7,21 @@ import '../../../data/repositories/admin_repository.dart';
 import '../../../shared/widgets/admin_stat_card.dart';
 import '../controllers/admin_dashboard_controller.dart';
 
-class AdminDashboardView extends ConsumerStatefulWidget {
+class AdminDashboardView extends StatefulWidget {
   const AdminDashboardView({super.key});
 
   @override
-  ConsumerState<AdminDashboardView> createState() =>
+  State<AdminDashboardView> createState() =>
       _AdminDashboardViewState();
 }
 
-class _AdminDashboardViewState extends ConsumerState<AdminDashboardView> {
+class _AdminDashboardViewState extends State<AdminDashboardView> {
   late final AdminDashboardController _ctrl;
 
   @override
   void initState() {
     super.initState();
-    final repo = ref.read(adminRepositoryProvider);
+    final repo = Get.find<AdminRepository>();
     _ctrl = Get.put(AdminDashboardController(repo));
   }
 
