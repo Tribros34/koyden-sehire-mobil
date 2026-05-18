@@ -18,6 +18,10 @@ dependencies:
 
   # State management
   flutter_riverpod: ^2.5.0
+  get: ^4.6.6
+
+  # Charts (admin dashboard)
+  fl_chart: ^0.69.0
 
   # HTTP
   dio: ^5.4.0
@@ -52,3 +56,13 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:koyden_sehire/app/app.dart';
+
+void main() {
+  testWidgets('App smoke test', (WidgetTester tester) async {
+    await tester.pumpWidget(const ProviderScope(child: KoydenSehireApp()));
+  });
+}

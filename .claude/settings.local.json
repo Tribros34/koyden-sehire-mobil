@@ -7,7 +7,18 @@
       "Bash(GOFLAGS=\"-mod=mod\" go build -v ./cmd/api)",
       "Bash(git rm *)",
       "Bash(git checkout *)",
-      "Bash(git restore *)"
+      "Bash(git restore *)",
+      "Bash(git fetch *)",
+      "Bash(gh pr *)",
+      "Bash(git apply *)",
+      "Bash(awk '{print $1}')",
+      "Bash(read f *)",
+      "Bash([ ! -f \"/c/Projeler/koyden-sehire-mobil/$f\" ])",
+      "Bash(sed 's/^+//')",
+      "Read(//tmp/**)",
+      "Bash(cp /tmp/router.dart /c/Projeler/koyden-sehire-mobil/flutter/lib/app/router.dart)",
+      "Bash(cp /tmp/api_endpoints.dart /c/Projeler/koyden-sehire-mobil/flutter/lib/core/api/api_endpoints.dart)",
+      "Bash(cp /tmp/pubspec.yaml /c/Projeler/koyden-sehire-mobil/flutter/pubspec.yaml)"
     ]
   }
 }
