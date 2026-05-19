@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:koyden_sehire/app/theme.dart';
 import 'package:koyden_sehire/core/services/auth_service.dart';
 import 'package:koyden_sehire/core/utils/validators.dart';
 import 'package:koyden_sehire/shared/extensions/context_extensions.dart';
@@ -87,8 +88,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Giriş Yap')),
+      appBar: AppBar(
+        title: null,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -97,19 +103,31 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 12),
-                Text(
-                  'Giriş Yap',
-                  style: context.text.headlineMedium,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Müşteri veya üretici hesabınızla giriş yapın.',
-                  style: context.text.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                const SizedBox(height: AppSpacing.lg),
+                Center(
+                  child: Icon(
+                    Icons.eco,
+                    size: 48,
+                    color: cs.primaryContainer,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  'Köyden Şehre',
+                  textAlign: TextAlign.center,
+                  style: context.text.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  'Üretici veya müşteri olarak giriş yapın',
+                  textAlign: TextAlign.center,
+                  style: context.text.bodyMedium?.copyWith(
+                    color: cs.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xl),
                 AppTextField(
                   label: 'Telefon (05XXXXXXXXX)',
                   controller: _phoneController,

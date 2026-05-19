@@ -133,7 +133,9 @@ class _CustomerRegisterScreenState extends State<CustomerRegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Müşteri Kaydı'),
+        title: null,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
         leading: _step == _Step.phone
             ? null
             : IconButton(
@@ -306,23 +308,39 @@ class _StepHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          child: LinearProgressIndicator(
+            value: step / total,
+            minHeight: 6,
+            color: cs.primaryContainer,
+            backgroundColor: cs.surfaceContainerHigh,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
         Text(
           'Adım $step / $total',
           style: context.text.labelMedium?.copyWith(
-            color: AppColors.primaryContainer,
+            color: cs.primaryContainer,
             fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: 8),
-        Text(title, style: context.text.headlineMedium),
+        Text(
+          title,
+          style: context.text.headlineMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         const SizedBox(height: 4),
         Text(
           subtitle,
           style: context.text.bodyMedium?.copyWith(
-            color: AppColors.onSurfaceVariant,
+            color: cs.onSurfaceVariant,
             height: 1.5,
           ),
         ),

@@ -68,7 +68,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Ürün Detayı')),
+      appBar: AppBar(
+        title: const Text('Ürün Detayı'),
+        backgroundColor: AppColors.surface,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.favorite_border),
+            tooltip: 'Favorilere ekle',
+            onPressed: () {},
+          ),
+        ],
+      ),
       body: Obx(() {
         if (_ctrl.isLoading.value && _ctrl.product.value == null) {
           return const AppLoading();
@@ -111,50 +123,84 @@ class _Body extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final farmer = product.farmer;
+    final cs = Theme.of(context).colorScheme;
+    final locationText = [
+      product.city,
+      product.district,
+      if (product.village != null) product.village,
+    ].whereType<String>().join(', ');
     return ListView(
       children: [
         ImageCarousel(imageUrls: product.imageUrls),
         Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.md),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(product.title, style: context.text.headlineMedium),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               Text(
                 AppFormatters.price(product.price, product.unit),
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.primaryContainer,
-                    fontWeight: FontWeight.w700,
-                  ),
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  color: cs.primaryContainer,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 22,
+                ),
               ),
               if (product.categoryName != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  product.categoryName!,
-                  style: const TextStyle(color: AppColors.onSurfaceVariant),
+                const SizedBox(height: AppSpacing.sm),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: cs.secondaryContainer,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  child: Text(
+                    product.categoryName!,
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: cs.onSecondaryContainer,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
                 ),
               ],
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md - 4),
               Row(
                 children: [
                   _StockChip(stockStatus: product.stockStatus),
-                  const SizedBox(width: 8),
-                  const Icon(
-                    Icons.location_on_outlined,
-                    size: 14,
-                    color: AppColors.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 4),
-                  Flexible(
-                    child: Text(
-                      [
-                        product.city,
-                        product.district,
-                        if (product.village != null) product.village,
-                      ].whereType<String>().join(', '),
-                      style:
-                          const TextStyle(color: AppColors.onSurfaceVariant),
+                  const SizedBox(width: AppSpacing.sm),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: cs.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 14,
+                          color: cs.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            locationText,
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelMedium
+                                ?.copyWith(color: cs.onSurfaceVariant),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -194,15 +240,33 @@ class _Body extends StatelessWidget {
                 ),
               const SizedBox(height: 24),
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(AppSpacing.md - 4),
                 decoration: BoxDecoration(
-                  color: AppColors.secondaryContainer.withValues(alpha: 0.4),
+                  color: cs.primaryContainer.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(AppRadius.lg),
-                  border: Border.all(color: AppColors.outlineVariant),
+                  border: Border.all(
+                    color: cs.primaryContainer.withValues(alpha: 0.3),
+                  ),
                 ),
-                child: const Text(
-                  AppConstants.platformInfoText,
-                  style: TextStyle(color: AppColors.onSurfaceVariant, height: 1.4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Aracısız. Komisyonsuz. Doğrudan üreticiden.',
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            color: cs.primaryContainer,
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                    const SizedBox(height: AppSpacing.xs + 2),
+                    const Text(
+                      AppConstants.platformInfoText,
+                      style: TextStyle(
+                        color: AppColors.onSurfaceVariant,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 16),
@@ -256,12 +320,13 @@ class _FarmerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () => context.push('/farmers/${farmer.id}'),
-      borderRadius: BorderRadius.circular(AppRadius.md),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(AppSpacing.md - 4),
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.outlineVariant),
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          color: AppColors.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          boxShadow: AppShadows.soft,
         ),
         child: Row(
           children: [

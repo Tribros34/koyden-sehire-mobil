@@ -13,20 +13,11 @@ class CustomerProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = Get.find<AuthService>();
+    final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Hesabım'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Çıkış Yap',
-            onPressed: () async {
-              await auth.logout();
-              if (context.mounted) context.go('/');
-            },
-          ),
-        ],
       ),
       body: SafeArea(
         child: ListView(
@@ -36,8 +27,12 @@ class CustomerProfileScreen extends StatelessWidget {
             Center(
               child: CircleAvatar(
                 radius: 40,
-                backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-                child: const Icon(Icons.person, size: 40, color: AppColors.primary),
+                backgroundColor: cs.secondaryContainer,
+                child: Icon(
+                  Icons.person,
+                  size: 40,
+                  color: cs.primaryContainer,
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -47,35 +42,54 @@ class CustomerProfileScreen extends StatelessWidget {
                 child: Text(
                   name.isNotEmpty ? name : 'Müşteri',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
               );
             }),
-            const SizedBox(height: 4),
-            const Center(
-              child: Text(
-                'Müşteri Hesabı',
-                style: TextStyle(color: AppColors.onSurfaceVariant),
+            const SizedBox(height: AppSpacing.sm),
+            Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: cs.secondaryContainer,
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
+                ),
+                child: Text(
+                  'Müşteri Hesabı',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: cs.secondary,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 32),
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.primaryFixed.withValues(alpha: 0.15),
+                color: cs.primaryContainer.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(color: AppColors.primaryFixed),
+                border: Border.all(
+                  color: cs.primaryContainer.withValues(alpha: 0.25),
+                ),
               ),
-              child: const Row(
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.info_outline, color: AppColors.primary),
-                  SizedBox(width: 12),
+                  Icon(Icons.info_outline, color: cs.primaryContainer),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       AppConstants.platformInfoText,
-                      style: TextStyle(color: AppColors.primary, height: 1.4),
+                      style: TextStyle(
+                        color: cs.onSurface,
+                        height: 1.4,
+                      ),
                     ),
                   ),
                 ],

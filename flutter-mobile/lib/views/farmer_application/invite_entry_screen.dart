@@ -71,6 +71,7 @@ class _InviteEntryScreenState extends State<InviteEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(title: const Text('Üretici Başvurusu')),
       body: SafeArea(
@@ -81,6 +82,35 @@ class _InviteEntryScreenState extends State<InviteEntryScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: cs.primaryContainer.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    border: Border.all(
+                      color: cs.primaryContainer.withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        color: cs.primaryContainer,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Davet sistemi kullanıcı kalitesini güvence altına alır.',
+                          style: context.text.bodySmall?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.lg),
                 Text('Davet Kodu', style: context.text.headlineMedium),
                 const SizedBox(height: 8),
                 const Text(
@@ -149,13 +179,15 @@ class _InviteInfoCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.success.withValues(alpha: 0.1),
+        color: AppColors.secondaryContainer.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.success),
+        border: Border.all(
+          color: AppColors.secondary.withValues(alpha: 0.5),
+        ),
       ),
       child: Row(
         children: [
-          const Icon(Icons.check_circle, color: AppColors.success),
+          const Icon(Icons.check_circle, color: AppColors.secondary),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

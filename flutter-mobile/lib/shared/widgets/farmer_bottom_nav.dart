@@ -7,10 +7,9 @@ class FarmerBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      currentIndex: currentIndex,
-      onTap: (i) {
+    return NavigationBar(
+      selectedIndex: currentIndex,
+      onDestinationSelected: (i) {
         switch (i) {
           case 0:
             context.go('/farmer/dashboard');
@@ -22,25 +21,25 @@ class FarmerBottomNav extends StatelessWidget {
             context.go('/farmer/profile');
         }
       },
-      items: const [
-        BottomNavigationBarItem(
+      destinations: const [
+        NavigationDestination(
           icon: Icon(Icons.dashboard_outlined),
-          activeIcon: Icon(Icons.dashboard),
+          selectedIcon: Icon(Icons.dashboard),
           label: 'Panel',
         ),
-        BottomNavigationBarItem(
+        NavigationDestination(
           icon: Icon(Icons.shopping_bag_outlined),
-          activeIcon: Icon(Icons.shopping_bag),
+          selectedIcon: Icon(Icons.shopping_bag),
           label: 'Ürünlerim',
         ),
-        BottomNavigationBarItem(
+        NavigationDestination(
           icon: Icon(Icons.card_giftcard_outlined),
-          activeIcon: Icon(Icons.card_giftcard),
+          selectedIcon: Icon(Icons.card_giftcard),
           label: 'Davetler',
         ),
-        BottomNavigationBarItem(
+        NavigationDestination(
           icon: Icon(Icons.person_outline),
-          activeIcon: Icon(Icons.person),
+          selectedIcon: Icon(Icons.person),
           label: 'Profil',
         ),
       ],

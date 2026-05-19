@@ -15,24 +15,41 @@ class RegisterChoiceScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Kayıt Ol')),
+      appBar: AppBar(
+        title: null,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+      ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            Text(
-              'Nasıl devam etmek istersiniz?',
-              style: context.text.headlineMedium,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Hesabınızın türünü seçin. Sonradan değiştirilemez.',
-              style: context.text.bodyMedium?.copyWith(
-                color: AppColors.onSurfaceVariant,
+            Center(
+              child: Icon(
+                Icons.eco,
+                size: 48,
+                color: cs.primaryContainer,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              'Hesap Oluştur',
+              textAlign: TextAlign.center,
+              style: context.text.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              'Nasıl devam etmek istersiniz?',
+              textAlign: TextAlign.center,
+              style: context.text.bodyMedium?.copyWith(
+                color: cs.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xl),
             _RoleCard(
               icon: Icons.shopping_basket_outlined,
               title: 'Müşteri olarak kayıt ol',
@@ -41,7 +58,7 @@ class RegisterChoiceScreen extends StatelessWidget {
               cta: 'Müşteri Kaydı',
               onTap: () => context.push('/register/customer'),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.md),
             _RoleCard(
               icon: Icons.agriculture_outlined,
               title: 'Üretici olarak başvur',
@@ -50,7 +67,7 @@ class RegisterChoiceScreen extends StatelessWidget {
               cta: 'Üretici Başvurusu',
               onTap: () => context.push('/apply'),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: AppSpacing.xl),
             Center(
               child: TextButton(
                 onPressed: () => context.go('/login'),
@@ -81,49 +98,58 @@ class _RoleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: AppShadows.soft,
+      ),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryContainer.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: cs.secondaryContainer,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  child: Icon(icon, color: cs.primaryContainer, size: 28),
                 ),
-                child: Icon(icon, color: AppColors.primaryContainer, size: 28),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: context.text.titleMedium),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: context.text.bodySmall?.copyWith(
-                        color: AppColors.onSurfaceVariant,
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: context.text.titleMedium),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: context.text.bodySmall?.copyWith(
+                          color: cs.onSurfaceVariant,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      '$cta →',
-                      style: context.text.labelLarge?.copyWith(
-                        color: AppColors.primaryContainer,
-                        fontWeight: FontWeight.w600,
+                      const SizedBox(height: 12),
+                      Text(
+                        '$cta →',
+                        style: context.text.labelLarge?.copyWith(
+                          color: cs.primaryContainer,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

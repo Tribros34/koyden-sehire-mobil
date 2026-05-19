@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:koyden_sehire/app/theme.dart';
 import 'package:koyden_sehire/shared/widgets/app_empty_widget.dart';
 import 'package:koyden_sehire/shared/widgets/app_error_widget.dart';
 import 'package:koyden_sehire/shared/widgets/category_chip.dart';
@@ -125,7 +126,12 @@ class _ProductListScreenState extends State<ProductListScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.sm + 4,
+              AppSpacing.md,
+              AppSpacing.sm,
+            ),
             child: TextField(
               controller: _searchController,
               textInputAction: TextInputAction.search,
@@ -142,6 +148,23 @@ class _ProductListScreenState extends State<ProductListScreen> {
                           _onSearchSubmitted('');
                         },
                       ),
+                filled: true,
+                fillColor: AppColors.surfaceContainerLowest,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(999),
+                  borderSide: const BorderSide(color: AppColors.outlineVariant),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(999),
+                  borderSide: const BorderSide(color: AppColors.outlineVariant),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(999),
+                  borderSide: const BorderSide(
+                    color: AppColors.primaryContainer,
+                    width: 2,
+                  ),
+                ),
               ),
             ),
           ),
@@ -156,19 +179,44 @@ class _ProductListScreenState extends State<ProductListScreen> {
           }),
           Obx(() {
             final ctrl = _ctrl;
+            final cs = Theme.of(context).colorScheme;
             return Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.sm,
+                AppSpacing.md,
+                AppSpacing.sm,
+              ),
               child: Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      ctrl.isLoading.value ? 'Yükleniyor...' : '${ctrl.total.value} ürün bulundu',
-                      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                    ),
+                    child: ctrl.isLoading.value
+                        ? Text(
+                            'Yükleniyor...',
+                            style: TextStyle(color: cs.onSurfaceVariant),
+                          )
+                        : RichText(
+                            text: TextSpan(
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(color: cs.onSurfaceVariant),
+                              children: [
+                                TextSpan(
+                                  text: '${ctrl.total.value}',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: cs.onSurface,
+                                  ),
+                                ),
+                                const TextSpan(text: ' ürün listeleniyor'),
+                              ],
+                            ),
+                          ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.sort),
-                    tooltip: 'Sıralama',
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.sort, size: 18),
+                    label: const Text('Sırala'),
                     onPressed: _showSortSheet,
                   ),
                 ],

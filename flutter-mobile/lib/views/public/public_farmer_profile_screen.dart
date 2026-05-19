@@ -195,18 +195,34 @@ class _Header extends StatelessWidget {
   const _Header({required this.profile});
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final location = [
+      profile.city,
+      profile.district,
+      if (profile.village != null) profile.village,
+    ].whereType<String>().join(' • ');
     return Column(
       children: [
-        CircleAvatar(
-          radius: 56,
-          backgroundColor: AppColors.surfaceContainerLow,
-          backgroundImage: profile.profileImageUrl == null
-              ? null
-              : CachedNetworkImageProvider(profile.profileImageUrl!),
-          child: profile.profileImageUrl == null
-              ? const Icon(Icons.person,
-                  size: 56, color: AppColors.onSurfaceVariant)
-              : null,
+        Container(
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: cs.primaryContainer.withValues(alpha: 0.25),
+              width: 3,
+            ),
+          ),
+          child: CircleAvatar(
+            radius: 48,
+            backgroundColor: AppColors.surfaceContainerLow,
+            backgroundImage: profile.profileImageUrl == null
+                ? null
+                : CachedNetworkImageProvider(profile.profileImageUrl!),
+            child: profile.profileImageUrl == null
+                ? const Icon(Icons.person,
+                    size: 48, color: AppColors.onSurfaceVariant)
+                : null,
+          ),
         ),
         const SizedBox(height: 12),
         Text(
@@ -224,28 +240,42 @@ class _Header extends StatelessWidget {
             if (profile.isVerified) const VerifiedBadge(small: false),
             Container(
               padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.outlineVariant),
+                color: cs.secondaryContainer,
+                borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
               child: Text(
                 producerTypeLabel(profile.producerType),
-                style: const TextStyle(fontSize: 12),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: cs.secondary,
+                ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        Text(
-          [
-            profile.city,
-            profile.district,
-            if (profile.village != null) profile.village,
-          ].whereType<String>().join(' • '),
-          style: const TextStyle(color: AppColors.onSurfaceVariant),
-        ),
+        if (location.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.location_on_outlined,
+                size: 14,
+                color: cs.onSurfaceVariant,
+              ),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  location,
+                  style: TextStyle(color: cs.onSurfaceVariant),
+                ),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }

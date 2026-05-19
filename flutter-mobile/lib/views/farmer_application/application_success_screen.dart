@@ -21,10 +21,20 @@ class ApplicationSuccessScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Icon(
-                  Icons.check_circle,
-                  size: 96,
-                  color: AppColors.success,
+                Center(
+                  child: Container(
+                    width: 96,
+                    height: 96,
+                    decoration: const BoxDecoration(
+                      color: AppColors.secondaryContainer,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.check,
+                      size: 52,
+                      color: AppColors.secondary,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 24),
                 Text(
@@ -44,8 +54,11 @@ class ApplicationSuccessScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryContainer.withValues(alpha: 0.06),
+                    color: AppColors.primaryContainer.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(AppRadius.md),
+                    border: Border.all(
+                      color: AppColors.primaryContainer.withValues(alpha: 0.25),
+                    ),
                   ),
                   child: const Row(
                     children: [
