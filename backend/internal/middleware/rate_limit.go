@@ -92,6 +92,37 @@ func LoginRateLimit(rdb *redis.Client) fiber.Handler {
 	}
 }
 
+func RegisterRateLimit(rdb *redis.Client) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		ctx := context.Background()
+
+		var body struct {
+			Phone string `json:"phone"`
+		}
+		c.BodyParser(&body)
+
+		ipKey := fmt.Sprintf("rl:register_ip:%s", c.IP())
+		ipCount, err := rdb.Incr(ctx, ipKey).Result()
+		if err == nil && ipCount == 1 {
+			rdb.Expire(ctx, ipKey, 15*time.Minute)
+		}
+
+		var phoneCount int64
+		if body.Phone != "" {
+			phoneKey := fmt.Sprintf("rl:register_phone:%s", body.Phone)
+			phoneCount, err = rdb.Incr(ctx, phoneKey).Result()
+			if err == nil && phoneCount == 1 {
+				rdb.Expire(ctx, phoneKey, time.Hour)
+			}
+		}
+
+		if ipCount > 10 || phoneCount > 3 {
+			return response.TooManyRequests(c, "Çok fazla istek gönderdiniz, lütfen bekleyin")
+		}
+		return c.Next()
+	}
+}
+
 func InviteValidateRateLimit(rdb *redis.Client) fiber.Handler {
 	return RateLimit(rdb, RateLimitConfig{
 		KeyFunc: func(c *fiber.Ctx) string {

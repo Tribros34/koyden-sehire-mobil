@@ -13,13 +13,19 @@ type RegisterCustomerRequest struct {
 }
 
 type LoginResponse struct {
-	AccessToken string   `json:"access_token"`
-	User        UserInfo `json:"user"`
+	AccessToken  string   `json:"access_token"`
+	RefreshToken string   `json:"refresh_token"`
+	User         UserInfo `json:"user"`
+}
+
+type RefreshRequest struct {
+	RefreshToken string `json:"refresh_token" validate:"required"`
 }
 
 type UserInfo struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Phone string `json:"phone"`
-	Role  string `json:"role"`
+	ID     string `json:"id"`
+	Name   string `json:"name"`
+	Phone  string `json:"phone"`
+	Role   string `json:"role"`
+	Status string `json:"status"`
 }

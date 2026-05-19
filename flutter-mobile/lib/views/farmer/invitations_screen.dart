@@ -51,7 +51,7 @@ class InvitationsScreen extends StatelessWidget {
                       padding: EdgeInsets.symmetric(vertical: 8),
                       child: Text(
                         'Henüz davet ettiğiniz kimse yok.',
-                        style: TextStyle(color: AppColors.textSecondary),
+                        style: TextStyle(color: AppColors.onSurfaceVariant),
                       ),
                     ),
                   const SizedBox(height: 24),
@@ -78,7 +78,7 @@ class _InviteCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppColors.primary, AppColors.primaryDark],
+          colors: [AppColors.primary, AppColors.primary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -160,7 +160,7 @@ class _InvitedList extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(AppRadius.md),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: AppColors.outlineVariant),
             ),
             child: Row(
               children: [
@@ -176,7 +176,7 @@ class _InvitedList extends StatelessWidget {
                         Text(
                           AppFormatters.date(p.createdAt!),
                           style: const TextStyle(
-                            color: AppColors.textSecondary,
+                            color: AppColors.onSurfaceVariant,
                             fontSize: 12,
                           ),
                         ),

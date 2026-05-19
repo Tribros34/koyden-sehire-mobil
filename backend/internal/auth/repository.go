@@ -15,6 +15,15 @@ func NewRepository(db *sqlx.DB) *Repository {
 	return &Repository{db: db}
 }
 
+func (r *Repository) FindByID(id string) (*User, error) {
+	var u User
+	err := r.db.Get(&u, "SELECT * FROM users WHERE id = $1", id)
+	if err != nil {
+		return nil, apperrors.ErrNotFound
+	}
+	return &u, nil
+}
+
 func (r *Repository) FindByPhone(phone string) (*User, error) {
 	var u User
 	err := r.db.Get(&u, "SELECT * FROM users WHERE phone = $1", phone)

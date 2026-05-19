@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:koyden_sehire/app/theme.dart';
 import 'package:koyden_sehire/core/services/auth_service.dart';
 import 'package:koyden_sehire/core/utils/validators.dart';
 import 'package:koyden_sehire/shared/extensions/context_extensions.dart';
@@ -107,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(
                   'Müşteri veya üretici hesabınızla giriş yapın.',
                   style: context.text.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -130,9 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   validator: Validators.password,
                   textInputAction: TextInputAction.done,
                   suffix: IconButton(
-                    icon: Icon(_obscure
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined),
+                    icon: Icon(_obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined),
                     onPressed: () => setState(() => _obscure = !_obscure),
                   ),
                 ),

@@ -312,7 +312,7 @@ class _StepHeader extends StatelessWidget {
         Text(
           'Adım $step / $total',
           style: context.text.labelMedium?.copyWith(
-            color: AppColors.primary,
+            color: AppColors.primaryContainer,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -322,7 +322,7 @@ class _StepHeader extends StatelessWidget {
         Text(
           subtitle,
           style: context.text.bodyMedium?.copyWith(
-            color: AppColors.textSecondary,
+            color: AppColors.onSurfaceVariant,
             height: 1.5,
           ),
         ),

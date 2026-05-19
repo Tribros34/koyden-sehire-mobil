@@ -14,91 +14,224 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        onTap: () => context.push('/products/${product.id}'),
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColors.border),
-            borderRadius: BorderRadius.circular(AppRadius.md),
-          ),
-          padding: const EdgeInsets.all(8),
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: AppShadows.soft,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          onTap: () => context.push('/products/${product.id}'),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                child: AspectRatio(
-                  aspectRatio: compact ? 4 / 3 : 1,
-                  child: product.firstImage == null
-                      ? Container(
-                          color: AppColors.background,
-                          alignment: Alignment.center,
-                          child: const Icon(
-                            Icons.image_outlined,
-                            color: AppColors.textSecondary,
+              _ProductImage(product: product),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.sm,
+                  AppSpacing.sm,
+                  AppSpacing.sm,
+                  AppSpacing.sm,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      product.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: cs.onSurface,
+                            fontWeight: FontWeight.w600,
+                            height: 1.25,
                           ),
-                        )
-                      : CachedNetworkImage(
-                          imageUrl: product.firstImage!,
-                          fit: BoxFit.cover,
-                          placeholder: (_, __) =>
-                              Container(color: AppColors.background),
-                          errorWidget: (_, __, ___) => Container(
-                            color: AppColors.background,
-                            alignment: Alignment.center,
-                            child: const Icon(Icons.broken_image_outlined),
+                    ),
+                    if (product.farmer != null) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.person_outline,
+                            size: 12,
+                            color: cs.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 3),
+                          Expanded(
+                            child: Text(
+                              product.farmer!.displayName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall
+                                  ?.copyWith(
+                                    color: cs.onSurfaceVariant,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      AppFormatters.price(product.price, product.unit),
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(
+                            color: AppColors.primaryContainer,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 12,
+                          color: cs.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 2),
+                        Expanded(
+                          child: Text(
+                            '${product.city}, ${product.district}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall
+                                ?.copyWith(
+                                  color: cs.onSurfaceVariant,
+                                ),
                           ),
                         ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                product.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                AppFormatters.price(product.price, product.unit),
-                style: const TextStyle(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  const Icon(
-                    Icons.location_on_outlined,
-                    size: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                  const SizedBox(width: 2),
-                  Expanded(
-                    child: Text(
-                      '${product.city}, ${product.district}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                      ),
+                      ],
                     ),
-                  ),
-                ],
+                    if (!compact) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      _StockBadge(stockStatus: product.stockStatus),
+                    ],
+                  ],
+                ),
               ),
-              if (!compact) ...[
-                const SizedBox(height: 6),
-                _StockBadge(stockStatus: product.stockStatus),
-              ],
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ProductImage extends StatelessWidget {
+  final ProductModel product;
+  const _ProductImage({required this.product});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(
+        top: Radius.circular(AppRadius.lg),
+      ),
+      child: AspectRatio(
+        aspectRatio: 4 / 3,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (product.firstImage == null)
+              Container(
+                color: cs.surfaceContainerLow,
+                alignment: Alignment.center,
+                child: Icon(
+                  Icons.image_outlined,
+                  color: cs.onSurfaceVariant,
+                  size: 32,
+                ),
+              )
+            else
+              CachedNetworkImage(
+                imageUrl: product.firstImage!,
+                fit: BoxFit.cover,
+                placeholder: (_, __) =>
+                    Container(color: cs.surfaceContainerLow),
+                errorWidget: (_, __, ___) => Container(
+                  color: cs.surfaceContainerLow,
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Icons.broken_image_outlined,
+                    color: cs.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            // Top-left category/organic badge
+            if (product.categoryName != null)
+              Positioned(
+                top: 8,
+                left: 8,
+                child: _CompactPillBadge(
+                  label: product.categoryName!,
+                  bg: AppColors.secondaryContainer,
+                  fg: AppColors.secondary,
+                ),
+              ),
+            // Top-right favorite icon (static for now)
+            Positioned(
+              top: 6,
+              right: 6,
+              child: Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.85),
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: const Icon(
+                  Icons.favorite_border,
+                  size: 16,
+                  color: AppColors.primaryContainer,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CompactPillBadge extends StatelessWidget {
+  final String label;
+  final Color bg;
+  final Color fg;
+  const _CompactPillBadge({
+    required this.label,
+    required this.bg,
+    required this.fg,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: fg,
+              fontWeight: FontWeight.w600,
+              fontSize: 11,
+              letterSpacing: 0.1,
+            ),
       ),
     );
   }
@@ -112,30 +245,22 @@ class _StockBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final available = stockStatus == 'available';
     final limited = stockStatus == 'limited';
-    final color = available
-        ? AppColors.success
-        : limited
-            ? AppColors.warning
-            : AppColors.textSecondary;
-    final label = available
-        ? 'Mevcut'
-        : limited
-            ? 'Sınırlı'
-            : 'Tükendi';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: color,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
+    final Color bg;
+    final Color fg;
+    final String label;
+    if (available) {
+      bg = AppColors.secondaryContainer;
+      fg = AppColors.secondary;
+      label = 'Mevcut';
+    } else if (limited) {
+      bg = const Color(0xFFFCE8C6);
+      fg = const Color(0xFF7A5A18);
+      label = 'Sınırlı';
+    } else {
+      bg = const Color(0xFFE5E7E6);
+      fg = AppColors.onSurfaceVariant;
+      label = 'Tükendi';
+    }
+    return _CompactPillBadge(label: label, bg: bg, fg: fg);
   }
 }

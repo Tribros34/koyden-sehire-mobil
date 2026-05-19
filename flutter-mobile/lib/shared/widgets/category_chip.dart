@@ -18,37 +18,36 @@ class AppCategoryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final bgColor = selected
+        ? cs.primaryContainer
+        : cs.secondaryContainer.withValues(alpha: 0.45);
+    final fgColor = selected ? cs.onPrimary : cs.secondary;
+
     return Material(
-      color: selected ? AppColors.primary : AppColors.surface,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
+      color: bgColor,
+      shape: const StadiumBorder(),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
         onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: selected ? AppColors.primary : AppColors.border,
-            ),
-            borderRadius: BorderRadius.circular(AppRadius.lg),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               if (icon != null) ...[
-                Icon(
-                  icon,
-                  size: 16,
-                  color: selected ? Colors.white : AppColors.textSecondary,
-                ),
+                Icon(icon, size: 16, color: fgColor),
                 const SizedBox(width: 6),
               ],
               Text(
                 label,
-                style: TextStyle(
-                  color: selected ? Colors.white : AppColors.textPrimary,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: fgColor,
+                      fontWeight: FontWeight.w600,
+                    ),
               ),
             ],
           ),

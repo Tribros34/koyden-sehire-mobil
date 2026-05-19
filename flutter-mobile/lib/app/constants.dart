@@ -13,8 +13,7 @@ class AppConstants {
 
   /// Returns true when the baseUrl is still the development default.
   /// Call this in `main()` and abort the release build if true.
-  static bool get isDevDefaultBaseUrl =>
-      baseUrl == 'http://10.0.2.2:8080/api/v1';
+  static bool get isDevDefaultBaseUrl => baseUrl == 'http://10.0.2.2:8080/api/v1';
 
   static const String appName = 'Köyden Şehre';
   static const String appTagline = 'Yerel üreticilerden taze ürünler';
@@ -32,8 +31,7 @@ class AppConstants {
   static const int maxProfileImageBytes = 2 * 1024 * 1024;
   static const int maxApplicationVideoBytes = 50 * 1024 * 1024;
 
-  static const String platformInfoText =
-      'Köyden Şehre, üreticilerle alıcıları doğrudan buluşturan komisyonsuz '
+  static const String platformInfoText = 'Köyden Şehre, üreticilerle alıcıları doğrudan buluşturan komisyonsuz '
       'bir platformdur. Platform üzerinden ödeme, sipariş, kargo veya '
       'uygulama içi mesajlaşma yapılmaz.';
 }

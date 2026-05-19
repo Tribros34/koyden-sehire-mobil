@@ -38,18 +38,18 @@ class ApplicationSuccessScreen extends StatelessWidget {
                   'Onaylandıktan sonra üretici panelinize giriş yaparak ürünlerinizi '
                   'ekleyebilirsiniz.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(height: 1.5, color: AppColors.textSecondary),
+                  style: TextStyle(height: 1.5, color: AppColors.onSurfaceVariant),
                 ),
                 const SizedBox(height: 24),
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.06),
+                    color: AppColors.primaryContainer.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: const Row(
                     children: [
-                      Icon(Icons.schedule, color: AppColors.primary),
+                      Icon(Icons.schedule, color: AppColors.primaryContainer),
                       SizedBox(width: 8),
                       Expanded(
                         child: Text(

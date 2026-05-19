@@ -114,7 +114,7 @@ func main() {
 	notifSvc := notifications.NewService(webhookSvc)
 
 	authRepo := auth.NewRepository(db)
-	authSvc := auth.NewService(authRepo, rdb, cfg.JWT.Secret, cfg.JWT.AccessTokenExpiry)
+	authSvc := auth.NewService(authRepo, rdb, cfg.JWT.Secret, cfg.JWT.AccessTokenExpiry, cfg.JWT.RefreshTokenExpiry)
 	authHandler := auth.NewHandler(authSvc)
 
 	otpRepo := otp.NewRepository(db)
@@ -199,7 +199,8 @@ func main() {
 	api.Post("/otp/send", middleware.OTPSendRateLimit(rdb), otpHandler.Send)
 	api.Post("/otp/verify", otpHandler.Verify)
 	api.Post("/auth/login", middleware.LoginRateLimit(rdb), authHandler.Login)
-	api.Post("/auth/register/customer", middleware.LoginRateLimit(rdb), authHandler.RegisterCustomer)
+	api.Post("/auth/refresh", authHandler.Refresh)
+	api.Post("/auth/register/customer", middleware.RegisterRateLimit(rdb), authHandler.RegisterCustomer)
 	api.Get("/categories", catHandler.List)
 	api.Get("/products", productHandler.List)
 	api.Get("/products/:id", productHandler.GetByID)

@@ -32,7 +32,7 @@ class AdminWebOnlyScreen extends StatelessWidget {
                 'Admin panel web üzerinden yönetilir.\n'
                 'Bu hesapla mobil uygulamaya giriş yapamazsınız.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textSecondary, height: 1.5),
+                style: TextStyle(color: AppColors.onSurfaceVariant, height: 1.5),
               ),
               const SizedBox(height: 32),
               AppButton(

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import 'package:koyden_sehire/app/constants.dart';
+import 'package:koyden_sehire/core/api/api_endpoints.dart';
 import 'package:koyden_sehire/core/errors/app_exception.dart';
 import 'package:koyden_sehire/core/errors/error_handler.dart';
 import 'package:koyden_sehire/core/storage/secure_storage_service.dart';
@@ -19,7 +20,7 @@ class ApiClient {
         responseType: ResponseType.json,
       ),
     );
-    _dio.interceptors.add(_AuthInterceptor(_storage, onUnauthorized));
+    _dio.interceptors.add(_AuthInterceptor(_storage, _dio, onUnauthorized));
   }
 
   Future<T> get<T>(
@@ -83,9 +84,13 @@ class ApiClient {
 
 class _AuthInterceptor extends Interceptor {
   final SecureStorageService _storage;
+  // The same Dio instance is used for the refresh call so it shares base
+  // options (baseUrl, timeouts), but we send the request without going
+  // through this interceptor to prevent an infinite retry loop.
+  final Dio _dio;
   final void Function() _onUnauthorized;
 
-  _AuthInterceptor(this._storage, this._onUnauthorized);
+  _AuthInterceptor(this._storage, this._dio, this._onUnauthorized);
 
   @override
   Future<void> onRequest(
@@ -100,16 +105,71 @@ class _AuthInterceptor extends Interceptor {
   }
 
   @override
-  void onError(DioException err, ErrorInterceptorHandler handler) {
-    if (err.response?.statusCode == 401) {
-      // TODO(auth-refresh): introduce /auth/refresh endpoint + retry-once
-      // with a refresh token before forcing logout. Today the access token
-      // is short-lived and every expiry forces the user through full
-      // OTP+login. Add a refresh token to the login response, store it in
-      // secure storage, and call it from here before invoking _onUnauthorized.
-      _storage.clearAll();
-      _onUnauthorized();
+  Future<void> onError(
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
+    if (err.response?.statusCode != 401) {
+      handler.next(err);
+      return;
     }
-    handler.next(err);
+
+    // Already a refresh call — don't retry again.
+    if (err.requestOptions.path.endsWith(ApiEndpoints.authRefresh)) {
+      await _storage.clearAll();
+      _onUnauthorized();
+      handler.next(err);
+      return;
+    }
+
+    final refreshToken = await _storage.getRefreshToken();
+    if (refreshToken == null || refreshToken.isEmpty) {
+      await _storage.clearAll();
+      _onUnauthorized();
+      handler.next(err);
+      return;
+    }
+
+    try {
+      // Send the refresh request directly (no interceptors) to avoid a loop.
+      final refreshResponse = await _dio.fetch<Map<String, dynamic>>(
+        RequestOptions(
+          path: ApiEndpoints.authRefresh,
+          method: 'POST',
+          data: {'refresh_token': refreshToken},
+          baseUrl: _dio.options.baseUrl,
+          contentType: 'application/json',
+          responseType: ResponseType.json,
+        ),
+      );
+
+      final data = (refreshResponse.data?['data'] as Map?)
+          ?.cast<String, dynamic>();
+      final newAccessToken = data?['access_token']?.toString() ?? '';
+      final newRefreshToken = data?['refresh_token']?.toString() ?? '';
+
+      if (newAccessToken.isEmpty) {
+        await _storage.clearAll();
+        _onUnauthorized();
+        handler.next(err);
+        return;
+      }
+
+      await _storage.saveToken(newAccessToken);
+      if (newRefreshToken.isNotEmpty) {
+        await _storage.saveRefreshToken(newRefreshToken);
+      }
+
+      // Retry the original request with the new access token.
+      final retryOptions = err.requestOptions
+        ..headers['Authorization'] = 'Bearer $newAccessToken';
+
+      final retryResponse = await _dio.fetch<dynamic>(retryOptions);
+      handler.resolve(retryResponse);
+    } catch (_) {
+      await _storage.clearAll();
+      _onUnauthorized();
+      handler.next(err);
+    }
   }
 }

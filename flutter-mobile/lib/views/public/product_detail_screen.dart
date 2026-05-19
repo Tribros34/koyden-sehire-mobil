@@ -123,17 +123,16 @@ class _Body extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 AppFormatters.price(product.price, product.unit),
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
-                ),
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    fontWeight: FontWeight.w700,
+                  ),
               ),
               if (product.categoryName != null) ...[
                 const SizedBox(height: 4),
                 Text(
                   product.categoryName!,
-                  style: const TextStyle(color: AppColors.textSecondary),
+                  style: const TextStyle(color: AppColors.onSurfaceVariant),
                 ),
               ],
               const SizedBox(height: 12),
@@ -144,7 +143,7 @@ class _Body extends StatelessWidget {
                   const Icon(
                     Icons.location_on_outlined,
                     size: 14,
-                    color: AppColors.textSecondary,
+                    color: AppColors.onSurfaceVariant,
                   ),
                   const SizedBox(width: 4),
                   Flexible(
@@ -155,7 +154,7 @@ class _Body extends StatelessWidget {
                         if (product.village != null) product.village,
                       ].whereType<String>().join(', '),
                       style:
-                          const TextStyle(color: AppColors.textSecondary),
+                          const TextStyle(color: AppColors.onSurfaceVariant),
                     ),
                   ),
                 ],
@@ -185,26 +184,25 @@ class _Body extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.background,
+                    color: AppColors.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: const Text(
                     'Bu ürün şu an tükenmiş.',
-                    style: TextStyle(color: AppColors.textSecondary),
+                    style: TextStyle(color: AppColors.onSurfaceVariant),
                   ),
                 ),
               const SizedBox(height: 24),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryLight.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(color: AppColors.primaryLight),
+                  color: AppColors.secondaryContainer.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  border: Border.all(color: AppColors.outlineVariant),
                 ),
                 child: const Text(
                   AppConstants.platformInfoText,
-                  style:
-                      TextStyle(color: AppColors.primaryDark, height: 1.4),
+                  style: TextStyle(color: AppColors.onSurfaceVariant, height: 1.4),
                 ),
               ),
               const SizedBox(height: 16),
@@ -232,7 +230,7 @@ class _StockChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final available = stockStatus == 'available';
-    final color = available ? AppColors.success : AppColors.textSecondary;
+    final color = available ? AppColors.success : AppColors.onSurfaceVariant;
     final label = available
         ? 'Mevcut'
         : (stockStatus == 'limited' ? 'Sınırlı' : 'Tükendi');
@@ -262,14 +260,14 @@ class _FarmerCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: AppColors.outlineVariant),
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: Row(
           children: [
             CircleAvatar(
               radius: 28,
-              backgroundColor: AppColors.background,
+              backgroundColor: AppColors.surfaceContainerLow,
               backgroundImage: farmer.profileImageUrl == null
                   ? null
                   : NetworkImage(farmer.profileImageUrl!),
@@ -290,7 +288,7 @@ class _FarmerCard extends StatelessWidget {
                     '${farmer.city}, ${farmer.district}',
                     style: const TextStyle(
                       fontSize: 12,
-                      color: AppColors.textSecondary,
+                      color: AppColors.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -304,7 +302,7 @@ class _FarmerCard extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+            const Icon(Icons.chevron_right, color: AppColors.onSurfaceVariant),
           ],
         ),
       ),
@@ -347,7 +345,7 @@ class _ContactActions extends StatelessWidget {
               label: 'İletişim Bilgisini Göster',
               variant: AppButtonVariant.secondary,
               onPressed: onReveal,
-              icon: const Icon(Icons.phone_outlined, color: AppColors.primary),
+              icon: const Icon(Icons.phone_outlined, color: AppColors.primaryContainer),
             )
           else ...[
             Container(
@@ -356,12 +354,12 @@ class _ContactActions extends StatelessWidget {
                 vertical: 12,
               ),
               decoration: BoxDecoration(
-                color: AppColors.background,
+                color: AppColors.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.phone, color: AppColors.primary),
+                  const Icon(Icons.phone, color: AppColors.primaryContainer),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(

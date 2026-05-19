@@ -31,6 +31,23 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 	return response.Success(c, resp, "Giriş başarılı")
 }
 
+func (h *Handler) Refresh(c *fiber.Ctx) error {
+	var req RefreshRequest
+	if err := c.BodyParser(&req); err != nil {
+		return response.BadRequest(c, "Geçersiz istek gövdesi")
+	}
+	if err := validator.Validate(&req); err != nil {
+		return response.BadRequest(c, "refresh_token zorunludur")
+	}
+
+	resp, err := h.svc.Refresh(&req)
+	if err != nil {
+		return response.Error(c, err)
+	}
+
+	return response.Success(c, resp, "Token yenilendi")
+}
+
 func (h *Handler) RegisterCustomer(c *fiber.Ctx) error {
 	var req RegisterCustomerRequest
 	if err := c.BodyParser(&req); err != nil {

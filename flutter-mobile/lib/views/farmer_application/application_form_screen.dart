@@ -148,9 +148,9 @@ class _StepIndicator extends StatelessWidget {
             child: LinearProgressIndicator(
               value: (currentStep + 1) / totalSteps,
               minHeight: 6,
-              backgroundColor: AppColors.border,
+              backgroundColor: AppColors.outlineVariant,
               valueColor:
-                  const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  const AlwaysStoppedAnimation<Color>(AppColors.primaryContainer),
             ),
           ),
           const SizedBox(height: 12),
@@ -275,7 +275,7 @@ class _StepAccountState extends State<_StepAccount> {
                 variant: AppButtonVariant.secondary,
                 onPressed: _verifyPhone,
                 icon: const Icon(Icons.verified_user_outlined,
-                    color: AppColors.primary),
+                    color: AppColors.primaryContainer),
               );
             }),
             const SizedBox(height: 12),
@@ -536,7 +536,7 @@ class _StepProductionState extends State<_StepProduction> {
               if (_cats.error.value != null) {
                 return const Text(
                   'Kategoriler yüklenemedi',
-                  style: TextStyle(color: AppColors.textSecondary),
+                  style: TextStyle(color: AppColors.onSurfaceVariant),
                 );
               }
               final roots = _cats.categories.where((c) => c.isRoot).toList();
@@ -689,15 +689,15 @@ class _StepVideoState extends State<_StepVideo> {
           children: [
             const Text(
               'Başvurunuzu daha güvenli ve hızlı değerlendirebilmemiz için kısa bir tanışma videosu yükleyebilirsiniz.',
-              style: TextStyle(color: AppColors.textSecondary, height: 1.4),
+              style: TextStyle(color: AppColors.onSurfaceVariant, height: 1.4),
             ),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.background,
+                color: AppColors.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: AppColors.outlineVariant),
               ),
               child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -727,19 +727,19 @@ class _StepVideoState extends State<_StepVideo> {
                 label: 'Galeriden Seç',
                 variant: AppButtonVariant.secondary,
                 icon: const Icon(Icons.photo_library_outlined,
-                    color: AppColors.primary),
+                    color: AppColors.primaryContainer),
                 onPressed: () => _pickVideo(ImageSource.gallery),
               ),
             ] else ...[
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.background,
+                  color: AppColors.surfaceContainerLow,
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.movie_outlined, color: AppColors.primary),
+                    const Icon(Icons.movie_outlined, color: AppColors.primaryContainer),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -755,7 +755,7 @@ class _StepVideoState extends State<_StepVideo> {
                             Text(
                               _bytesPretty(_videoSize!),
                               style: const TextStyle(
-                                  color: AppColors.textSecondary),
+                                  color: AppColors.onSurfaceVariant),
                             ),
                         ],
                       ),
@@ -778,7 +778,7 @@ class _StepVideoState extends State<_StepVideo> {
                 const SizedBox(height: 4),
                 Text(
                   'Yükleniyor ${(uploadProgress * 100).toStringAsFixed(0)}%',
-                  style: const TextStyle(color: AppColors.textSecondary),
+                  style: const TextStyle(color: AppColors.onSurfaceVariant),
                 ),
               ],
               const SizedBox(height: 12),
@@ -792,18 +792,18 @@ class _StepVideoState extends State<_StepVideo> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.06),
+                color: AppColors.primaryContainer.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: const Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.lock_outline, color: AppColors.primary),
+                  Icon(Icons.lock_outline, color: AppColors.primaryContainer),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Bu video herkese açık yayınlanmaz. Yalnızca başvurunuzu değerlendiren Köyden Şehre ekibi tarafından görüntülenir.',
-                      style: TextStyle(color: AppColors.primaryDark, height: 1.4),
+                      style: TextStyle(color: AppColors.primaryContainer, height: 1.4),
                     ),
                   ),
                 ],
@@ -928,12 +928,12 @@ class _StepTermsState extends State<_StepTerms> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.primaryLight.withValues(alpha: 0.12),
+                color: AppColors.primaryFixed.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: const Text(
                 AppConstants.platformInfoText,
-                style: TextStyle(color: AppColors.primaryDark, height: 1.4),
+                style: TextStyle(color: AppColors.primaryContainer, height: 1.4),
               ),
             ),
             const SizedBox(height: 24),

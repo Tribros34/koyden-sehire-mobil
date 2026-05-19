@@ -54,9 +54,8 @@ class AuthService extends GetxService {
     } else if (role == 'farmer' && st == 'active') {
       _resetTo(AuthStatus.farmerActive, id: id, name: name);
     } else if (role == 'farmer' && st == 'suspended') {
-      await _storage.clearAll();
       _resetTo(
-        AuthStatus.loggedOut,
+        AuthStatus.farmerSuspended,
         error: 'Hesabınız askıya alınmıştır',
       );
     } else if (role == 'customer' && st == 'active') {
@@ -87,6 +86,7 @@ class AuthService extends GetxService {
   /// Requests an OTP for customer registration. Backend doesn't distinguish
   /// the purpose at the API level — the same /otp/send endpoint is used.
   Future<bool> requestRegisterOtp(String phone) async {
+    isSubmitting.value = true;
     errorMessage.value = null;
     try {
       await _repo.sendOtp(phone);
@@ -97,12 +97,15 @@ class AuthService extends GetxService {
     } catch (_) {
       errorMessage.value = 'OTP gönderilemedi, tekrar deneyin';
       return false;
+    } finally {
+      isSubmitting.value = false;
     }
   }
 
   /// Verifies the OTP. On success the backend keeps an `otp_verified` marker
   /// alive for ~30 minutes which [registerCustomer] consumes.
   Future<bool> verifyRegisterOtp(String phone, String code) async {
+    isSubmitting.value = true;
     errorMessage.value = null;
     try {
       await _repo.verifyOtp(phone, code);
@@ -113,6 +116,8 @@ class AuthService extends GetxService {
     } catch (_) {
       errorMessage.value = 'Kod doğrulanamadı, tekrar deneyin';
       return false;
+    } finally {
+      isSubmitting.value = false;
     }
   }
 
@@ -157,6 +162,9 @@ class AuthService extends GetxService {
     }
 
     await _storage.saveToken(res.accessToken);
+    if (res.refreshToken.isNotEmpty) {
+      await _storage.saveRefreshToken(res.refreshToken);
+    }
     await _storage.saveUserInfo(
       id: res.user.id,
       role: res.user.role,

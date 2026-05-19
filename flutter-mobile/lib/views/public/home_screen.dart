@@ -23,14 +23,35 @@ class HomeScreen extends StatelessWidget {
     final catCtrl = Get.find<CategoryController>();
     final homeCtrl = Get.find<HomeController>();
     final auth = Get.find<AuthService>();
+    final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Row(
+        titleSpacing: AppSpacing.md,
+        title: Row(
           children: [
-            Icon(Icons.eco_outlined, color: AppColors.primary),
-            SizedBox(width: 8),
-            Text(AppConstants.appName),
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: cs.secondaryContainer,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              alignment: Alignment.center,
+              child: Icon(
+                Icons.eco_outlined,
+                color: cs.primaryContainer,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              AppConstants.appName,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: cs.onSurface,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
           ],
         ),
         actions: [
@@ -50,6 +71,12 @@ class HomeScreen extends StatelessWidget {
                 icon: const Icon(Icons.admin_panel_settings_outlined, size: 18),
                 label: const Text('Admin'),
               );
+            } else if (status == AuthStatus.customerActive) {
+              return TextButton.icon(
+                onPressed: () => context.push('/customer/profile'),
+                icon: const Icon(Icons.person_outline, size: 18),
+                label: const Text('Hesabım'),
+              );
             } else {
               return TextButton.icon(
                 onPressed: () => context.push('/login'),
@@ -58,12 +85,13 @@ class HomeScreen extends StatelessWidget {
               );
             }
           }),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.sm),
         ],
       ),
       bottomNavigationBar: Obx(() {
         final isFarmer = auth.status.value == AuthStatus.farmerActive;
-        return _PublicBottomNav(isFarmer: isFarmer);
+        final isCustomer = auth.status.value == AuthStatus.customerActive;
+        return _PublicBottomNav(isFarmer: isFarmer, isCustomer: isCustomer);
       }),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -73,9 +101,9 @@ class HomeScreen extends StatelessWidget {
         child: CustomScrollView(
           physics: const ClampingScrollPhysics(),
           slivers: [
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
             const SliverToBoxAdapter(child: _HeroSearchBar()),
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.lg)),
 
             // Categories
             SliverToBoxAdapter(
@@ -84,7 +112,7 @@ class HomeScreen extends StatelessWidget {
                 onSeeAll: () => context.push('/products'),
               ),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 8)),
+            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
             SliverToBoxAdapter(
               child: Obx(() {
                 if (catCtrl.isLoading.value) {
@@ -94,18 +122,21 @@ class HomeScreen extends StatelessWidget {
                   );
                 }
                 if (catCtrl.error.value != null) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md),
                     child: Text(
                       'Kategoriler yüklenemedi',
-                      style: TextStyle(color: AppColors.textSecondary),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
                     ),
                   );
                 }
                 return _CategoryRow(categories: catCtrl.categories);
               }),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.lg)),
 
             // New products
             SliverToBoxAdapter(
@@ -114,44 +145,52 @@ class HomeScreen extends StatelessWidget {
                 onSeeAll: () => context.push('/products'),
               ),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 8)),
+            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.sm)),
             SliverToBoxAdapter(
               child: Obx(() {
                 if (homeCtrl.isLoading.value) {
                   return const SizedBox(
-                    height: 240,
+                    height: 280,
                     child: _HorizontalShimmer(),
                   );
                 }
                 if (homeCtrl.error.value != null) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md),
                     child: Text(
                       'Ürünler yüklenemedi',
-                      style: TextStyle(color: AppColors.textSecondary),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
                     ),
                   );
                 }
                 final items = homeCtrl.newProducts;
                 if (items.isEmpty) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md),
                     child: Text(
                       'Henüz ürün bulunmuyor.',
-                      style: TextStyle(color: AppColors.textSecondary),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
                     ),
                   );
                 }
                 return SizedBox(
-                  height: 270,
+                  height: 280,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     physics: const ClampingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md),
                     itemCount: items.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 12),
+                    separatorBuilder: (_, __) =>
+                        const SizedBox(width: AppSpacing.sm + 4),
                     itemBuilder: (_, i) => SizedBox(
-                      width: 160,
+                      width: 168,
                       child: ProductCard(product: items[i], compact: true),
                     ),
                   ),
@@ -167,19 +206,20 @@ class HomeScreen extends StatelessWidget {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpacing.lg),
                     const _SectionHeader(title: 'Öne Çıkan Üreticiler'),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpacing.sm),
                     SizedBox(
-                      height: 180,
+                      height: 208,
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
                         physics: const ClampingScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md),
                         itemCount: farmers.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 12),
-                        itemBuilder: (_, i) =>
-                            FarmerCard(farmer: farmers[i]),
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(width: AppSpacing.sm + 4),
+                        itemBuilder: (_, i) => FarmerCard(farmer: farmers[i]),
                       ),
                     ),
                   ],
@@ -187,9 +227,9 @@ class HomeScreen extends StatelessWidget {
               }),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.lg)),
             const SliverToBoxAdapter(child: _PlatformInfoCard()),
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
             SliverToBoxAdapter(
               child: Obx(() {
                 final isFarmer =
@@ -199,7 +239,7 @@ class HomeScreen extends StatelessWidget {
                     : const _GuestCtaCard();
               }),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.xl)),
           ],
         ),
       ),
@@ -211,14 +251,14 @@ class HomeScreen extends StatelessWidget {
 
 class _PublicBottomNav extends StatelessWidget {
   final bool isFarmer;
-  const _PublicBottomNav({required this.isFarmer});
+  final bool isCustomer;
+  const _PublicBottomNav({required this.isFarmer, required this.isCustomer});
 
   @override
   Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      currentIndex: 0,
-      onTap: (i) {
+    return NavigationBar(
+      selectedIndex: 0,
+      onDestinationSelected: (i) {
         switch (i) {
           case 0:
             break;
@@ -229,31 +269,45 @@ class _PublicBottomNav extends StatelessWidget {
           case 3:
             if (isFarmer) {
               context.go('/farmer/dashboard');
+            } else if (isCustomer) {
+              context.push('/customer/profile');
             } else {
               context.push('/login');
             }
         }
       },
-      items: [
-        const BottomNavigationBarItem(
+      destinations: [
+        const NavigationDestination(
           icon: Icon(Icons.home_outlined),
-          activeIcon: Icon(Icons.home),
+          selectedIcon: Icon(Icons.home),
           label: 'Ana Sayfa',
         ),
-        const BottomNavigationBarItem(
+        const NavigationDestination(
           icon: Icon(Icons.shopping_bag_outlined),
-          activeIcon: Icon(Icons.shopping_bag),
+          selectedIcon: Icon(Icons.shopping_bag),
           label: 'Ürünler',
         ),
-        const BottomNavigationBarItem(
+        const NavigationDestination(
           icon: Icon(Icons.agriculture_outlined),
+          selectedIcon: Icon(Icons.agriculture),
           label: 'Başvur',
         ),
-        BottomNavigationBarItem(
-          icon: Icon(
-              isFarmer ? Icons.dashboard_outlined : Icons.login_outlined),
-          activeIcon: Icon(isFarmer ? Icons.dashboard : Icons.login),
-          label: isFarmer ? 'Panelim' : 'Giriş Yap',
+        NavigationDestination(
+          icon: Icon(isFarmer
+              ? Icons.dashboard_outlined
+              : isCustomer
+                  ? Icons.person_outline
+                  : Icons.login_outlined),
+          selectedIcon: Icon(isFarmer
+              ? Icons.dashboard
+              : isCustomer
+                  ? Icons.person
+                  : Icons.login),
+          label: isFarmer
+              ? 'Panelim'
+              : isCustomer
+                  ? 'Hesabım'
+                  : 'Giriş',
         ),
       ],
     );
@@ -264,31 +318,44 @@ class _PublicBottomNav extends StatelessWidget {
 
 class _HeroSearchBar extends StatelessWidget {
   const _HeroSearchBar();
+
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Material(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          onTap: () => context.push('/search'),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              border: Border.all(color: AppColors.border),
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.search, color: AppColors.textSecondary),
-                SizedBox(width: 8),
-                Text(
-                  'Ürün veya üretici ara...',
-                  style: TextStyle(color: AppColors.textSecondary),
-                ),
-              ],
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+      child: Container(
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          border: Border.all(color: cs.outlineVariant),
+          boxShadow: AppShadows.soft,
+        ),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(AppRadius.pill),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            onTap: () => context.push('/search'),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md + 2,
+                vertical: 14,
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.search, color: cs.onSurfaceVariant, size: 22),
+                  const SizedBox(width: AppSpacing.sm + 2),
+                  Expanded(
+                    child: Text(
+                      'Ürün veya üretici ara...',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -301,28 +368,69 @@ class _SectionHeader extends StatelessWidget {
   final String title;
   final VoidCallback? onSeeAll;
   const _SectionHeader({required this.title, this.onSeeAll});
+
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       child: Row(
         children: [
           Expanded(
             child: Text(
-                title, style: Theme.of(context).textTheme.titleLarge),
+              title,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
           ),
           if (onSeeAll != null)
             TextButton(
-                onPressed: onSeeAll, child: const Text('Tümünü Gör')),
+              onPressed: onSeeAll,
+              child: const Text('Tümünü Gör'),
+            ),
         ],
       ),
     );
   }
 }
 
+IconData _iconForCategorySlug(String slug, String? backendIcon) {
+  final s = slug.toLowerCase();
+  if (s.contains('sebze') || s.contains('vegetable')) return Icons.eco_outlined;
+  if (s.contains('meyve') || s.contains('fruit')) {
+    return Icons.local_florist_outlined;
+  }
+  if (s.contains('yumurta') || s.contains('egg')) {
+    return Icons.egg_alt_outlined;
+  }
+  if (s.contains('sut') || s.contains('süt') || s.contains('milk') ||
+      s.contains('dairy')) {
+    return Icons.local_drink_outlined;
+  }
+  if (s.contains('bal') || s.contains('honey')) return Icons.hive_outlined;
+  if (s.contains('tahil') || s.contains('tahıl') || s.contains('grain') ||
+      s.contains('bakliyat')) {
+    return Icons.grass_outlined;
+  }
+  if (s.contains('et') || s.contains('meat')) {
+    return Icons.restaurant_menu_outlined;
+  }
+  if (s.contains('zeytin') || s.contains('olive')) {
+    return Icons.water_drop_outlined;
+  }
+  if (s.contains('peynir') || s.contains('cheese')) {
+    return Icons.lunch_dining_outlined;
+  }
+  if (s.contains('bitki') || s.contains('herb') || s.contains('baharat')) {
+    return Icons.spa_outlined;
+  }
+  return Icons.local_offer_outlined;
+}
+
 class _CategoryRow extends StatelessWidget {
   final List<CategoryModel> categories;
   const _CategoryRow({required this.categories});
+
   @override
   Widget build(BuildContext context) {
     final roots = categories.where((c) => c.isRoot).toList();
@@ -331,13 +439,14 @@ class _CategoryRow extends StatelessWidget {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const ClampingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
         itemCount: roots.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.sm),
         itemBuilder: (_, i) {
           final c = roots[i];
           return AppCategoryChip(
             label: c.name,
+            icon: _iconForCategorySlug(c.slug, c.icon),
             onTap: () => context.push('/products?category_id=${c.id}'),
           );
         },
@@ -348,16 +457,17 @@ class _CategoryRow extends StatelessWidget {
 
 class _HorizontalShimmer extends StatelessWidget {
   const _HorizontalShimmer();
+
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
       scrollDirection: Axis.horizontal,
       physics: const ClampingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       itemCount: 4,
-      separatorBuilder: (_, __) => const SizedBox(width: 12),
+      separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.sm + 4),
       itemBuilder: (_, __) => const SizedBox(
-        width: 160,
+        width: 168,
         child: ShimmerProductCard(),
       ),
     );
@@ -366,27 +476,59 @@ class _HorizontalShimmer extends StatelessWidget {
 
 class _PlatformInfoCard extends StatelessWidget {
   const _PlatformInfoCard();
+
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.primaryLight.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: AppColors.primaryLight),
+          color: cs.primaryContainer.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(
+            color: cs.primaryContainer.withValues(alpha: 0.3),
+          ),
         ),
-        child: const Row(
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.info_outline, color: AppColors.primaryDark),
-            SizedBox(width: 12),
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: cs.secondaryContainer,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              alignment: Alignment.center,
+              child: Icon(
+                Icons.handshake_outlined,
+                color: cs.primaryContainer,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
-              child: Text(
-                AppConstants.platformInfoText,
-                style:
-                    TextStyle(color: AppColors.primaryDark, height: 1.4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Aracısız. Komisyonsuz. Doğrudan üreticiden.',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: cs.primaryContainer,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    AppConstants.platformInfoText,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: cs.onSurfaceVariant,
+                          height: 1.5,
+                        ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -398,42 +540,73 @@ class _PlatformInfoCard extends StatelessWidget {
 
 class _GuestCtaCard extends StatelessWidget {
   const _GuestCtaCard();
+
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.md + 2),
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: AppColors.border),
+          color: cs.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          boxShadow: AppShadows.soft,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Üretici misiniz?',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Davet kodunuzla başvurun ve ürünlerinizi platformda yayınlayın.',
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 12),
             Row(
               children: [
-                AppButton(
-                  label: 'Başvur',
-                  onPressed: () => context.push('/apply'),
-                  fullWidth: false,
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: cs.secondaryContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Icons.agriculture_outlined,
+                    color: cs.primaryContainer,
+                    size: 24,
+                  ),
                 ),
-                const SizedBox(width: 12),
-                OutlinedButton.icon(
-                  onPressed: () => context.push('/login'),
-                  icon: const Icon(Icons.login_outlined, size: 18),
-                  label: const Text('Üretici Girişi'),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Text(
+                    'Üretici misiniz?',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'Davet kodunuzla başvurun ve ürünlerinizi platformda yayınlayın.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: cs.onSurfaceVariant,
+                    height: 1.45,
+                  ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Row(
+              children: [
+                Expanded(
+                  child: AppButton(
+                    label: 'Başvur',
+                    onPressed: () => context.push('/apply'),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => context.push('/login'),
+                    icon: const Icon(Icons.login_outlined, size: 18),
+                    label: const Text('Üretici Girişi'),
+                  ),
                 ),
               ],
             ),
@@ -446,25 +619,31 @@ class _GuestCtaCard extends StatelessWidget {
 
 class _FarmerPanelCtaCard extends StatelessWidget {
   const _FarmerPanelCtaCard();
+
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.primaryLight.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: AppColors.primary),
+          color: cs.primaryContainer.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(
+            color: cs.primaryContainer.withValues(alpha: 0.3),
+          ),
         ),
         child: Row(
           children: [
-            const Icon(Icons.dashboard_outlined, color: AppColors.primary),
-            const SizedBox(width: 12),
-            const Expanded(
+            Icon(Icons.dashboard_outlined, color: cs.primaryContainer),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
               child: Text(
                 'Çiftçi panelinize gitmek için tıklayın.',
-                style: TextStyle(color: AppColors.primaryDark),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: cs.primary,
+                    ),
               ),
             ),
             TextButton(

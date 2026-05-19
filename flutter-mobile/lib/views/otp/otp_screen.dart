@@ -67,7 +67,7 @@ class _OtpScreenState extends State<OtpScreen> {
               Text(
                 '$masked numarasına 6 haneli doğrulama kodu gönderdik.',
                 style: context.text.bodyMedium?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: AppColors.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 32),
@@ -94,7 +94,7 @@ class _OtpScreenState extends State<OtpScreen> {
                     return Text(
                       'Kodu tekrar gönder ($cooldown)',
                       style:
-                          const TextStyle(color: AppColors.textSecondary),
+                          const TextStyle(color: AppColors.onSurfaceVariant),
                     );
                   }
                   return TextButton(

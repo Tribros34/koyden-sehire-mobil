@@ -8,29 +8,28 @@ class FoundingBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fontSize = small ? 11.0 : 13.0;
+    final cs = Theme.of(context).colorScheme;
     final iconSize = small ? 14.0 : 18.0;
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: small ? 6 : 10,
-        vertical: small ? 2 : 4,
+        horizontal: small ? AppSpacing.sm : 10,
+        vertical: small ? 3 : 5,
       ),
       decoration: BoxDecoration(
-        color: AppColors.secondary.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        color: cs.tertiaryContainer.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.star, color: AppColors.secondary, size: iconSize),
+          Icon(Icons.star, color: cs.tertiary, size: iconSize),
           const SizedBox(width: 4),
           Text(
             'Kurucu Üretici',
-            style: TextStyle(
-              color: AppColors.secondary,
-              fontSize: fontSize,
-              fontWeight: FontWeight.w600,
-            ),
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: cs.tertiary,
+                  fontWeight: FontWeight.w600,
+                ),
           ),
         ],
       ),

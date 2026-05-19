@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 
 extension ContextX on BuildContext {
   ThemeData get theme => Theme.of(this);
@@ -8,11 +7,15 @@ extension ContextX on BuildContext {
   MediaQueryData get mq => MediaQuery.of(this);
 
   void toast(String message) {
-    Fluttertoast.showToast(
-      msg: message,
-      toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.BOTTOM,
-    );
+    ScaffoldMessenger.of(this)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
   }
 
   void snack(String message, {bool isError = false}) {

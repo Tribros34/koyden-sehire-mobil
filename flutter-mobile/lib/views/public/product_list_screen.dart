@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'package:koyden_sehire/app/theme.dart';
 import 'package:koyden_sehire/shared/widgets/app_empty_widget.dart';
 import 'package:koyden_sehire/shared/widgets/app_error_widget.dart';
 import 'package:koyden_sehire/shared/widgets/category_chip.dart';
@@ -57,8 +56,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
       _ctrl.loadMore();
     }
   }
@@ -73,9 +71,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
           children: [
             const Padding(
               padding: EdgeInsets.all(16),
-              child: Text('Sıralama',
-                  style: TextStyle(
-                      fontWeight: FontWeight.w600, fontSize: 16)),
+              child: Text('Sıralama', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
             ),
             _SortTile(
               label: 'En Yeni',
@@ -103,9 +99,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
       if (value == null) return;
       final filter = _ctrl.filter.value;
       _ctrl.applyFilter(
-        value == '__newest__'
-            ? filter.copyWith(clearSort: true)
-            : filter.copyWith(sort: value),
+        value == '__newest__' ? filter.copyWith(clearSort: true) : filter.copyWith(sort: value),
       );
     });
   }
@@ -113,18 +107,14 @@ class _ProductListScreenState extends State<ProductListScreen> {
   void _onSearchSubmitted(String value) {
     final filter = _ctrl.filter.value;
     _ctrl.applyFilter(
-      value.trim().isEmpty
-          ? filter.copyWith(clearSearch: true)
-          : filter.copyWith(search: value.trim()),
+      value.trim().isEmpty ? filter.copyWith(clearSearch: true) : filter.copyWith(search: value.trim()),
     );
   }
 
   void _selectCategory(String? id) {
     final filter = _ctrl.filter.value;
     _ctrl.applyFilter(
-      id == null
-          ? filter.copyWith(clearCategory: true)
-          : filter.copyWith(categoryId: id),
+      id == null ? filter.copyWith(clearCategory: true) : filter.copyWith(categoryId: id),
     );
   }
 
@@ -156,9 +146,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
             ),
           ),
           Obx(() {
-            final cats = _catCtrl.categories
-                .where((c) => c.isRoot)
-                .toList();
+            final cats = _catCtrl.categories.where((c) => c.isRoot).toList();
             if (cats.isEmpty) return const SizedBox.shrink();
             return _CategoryFilterBar(
               categories: cats,
@@ -174,11 +162,8 @@ class _ProductListScreenState extends State<ProductListScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      ctrl.isLoading.value
-                          ? 'Yükleniyor...'
-                          : '${ctrl.total.value} ürün bulundu',
-                      style: const TextStyle(
-                          color: AppColors.textSecondary),
+                      ctrl.isLoading.value ? 'Yükleniyor...' : '${ctrl.total.value} ürün bulundu',
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ),
                   IconButton(
@@ -211,9 +196,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
     }
     if (ctrl.items.isEmpty) {
       final search = ctrl.filter.value.search;
-      final emptyMsg = (search?.isNotEmpty ?? false)
-          ? '"$search" için sonuç bulunamadı'
-          : 'Henüz ürün bulunmuyor';
+      final emptyMsg = (search?.isNotEmpty ?? false) ? '"$search" için sonuç bulunamadı' : 'Henüz ürün bulunmuyor';
       return AppEmptyWidget(message: emptyMsg);
     }
     return RefreshIndicator(

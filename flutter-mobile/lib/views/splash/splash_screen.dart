@@ -27,9 +27,7 @@ class _SplashScreenState extends State<SplashScreen> {
     await auth.bootstrap();
     final elapsed = DateTime.now().difference(start);
     if (elapsed < const Duration(milliseconds: 1200)) {
-      await Future.delayed(
-        const Duration(milliseconds: 1200) - elapsed,
-      );
+      await Future.delayed(const Duration(milliseconds: 1200) - elapsed);
     }
     if (!mounted) return;
     switch (auth.status.value) {
@@ -43,6 +41,8 @@ class _SplashScreenState extends State<SplashScreen> {
         context.go('/');
         break;
       case AuthStatus.farmerSuspended:
+        context.go('/login');
+        break;
       case AuthStatus.loggedOut:
       case AuthStatus.unknown:
         context.go('/');
@@ -53,27 +53,28 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primary,
+      backgroundColor: AppColors.primaryContainer,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.eco_outlined, color: Colors.white, size: 72),
-            const SizedBox(height: 16),
-            const Text(
+            const SizedBox(height: AppSpacing.md),
+            Text(
               AppConstants.appName,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               AppConstants.appTagline,
-              style: TextStyle(color: Colors.white.withValues(alpha: 0.85)),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.85),
+                  ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: AppSpacing.xl),
             const SizedBox(
               width: 24,
               height: 24,

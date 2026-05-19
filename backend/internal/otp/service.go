@@ -68,9 +68,11 @@ func (s *Service) Send(phone, ip, userAgent string) (*SendResponse, error) {
 		log.Printf("failed to set OTP cooldown: %v", err)
 	}
 
+	var devCode *string
 	if s.appEnv == "development" {
 		masked := maskPhone(phone)
 		log.Printf("OTP for %s: %s", masked, code)
+		devCode = &code
 	} else {
 		msg := fmt.Sprintf("Köyden Şehre doğrulama kodunuz: %s. Bu kod 5 dakika geçerlidir.", code)
 		go func() {
@@ -85,6 +87,7 @@ func (s *Service) Send(phone, ip, userAgent string) (*SendResponse, error) {
 	return &SendResponse{
 		Message:   "OTP gönderildi",
 		ExpiresIn: s.expirySeconds,
+		DevCode:   devCode,
 	}, nil
 }
 

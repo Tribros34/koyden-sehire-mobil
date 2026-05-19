@@ -111,7 +111,7 @@ class _MyProductCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.outlineVariant),
       ),
       padding: const EdgeInsets.all(12),
       child: Column(
@@ -126,9 +126,9 @@ class _MyProductCard extends StatelessWidget {
                   height: 64,
                   child: product.imageUrls.isEmpty
                       ? Container(
-                          color: AppColors.background,
+                          color: AppColors.surfaceContainerLow,
                           child: const Icon(Icons.image_outlined,
-                              color: AppColors.textSecondary),
+                              color: AppColors.onSurfaceVariant),
                         )
                       : CachedNetworkImage(
                           imageUrl: product.imageUrls.first,
@@ -237,8 +237,8 @@ class _StatusBadge extends StatelessWidget {
       'active' => ('Aktif', AppColors.success),
       'pending' => ('Beklemede', AppColors.warning),
       'rejected' => ('Reddedildi', AppColors.error),
-      'hidden' => ('Pasif', AppColors.textSecondary),
-      _ => (status, AppColors.textSecondary),
+      'hidden' => ('Pasif', AppColors.onSurfaceVariant),
+      _ => (status, AppColors.onSurfaceVariant),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),

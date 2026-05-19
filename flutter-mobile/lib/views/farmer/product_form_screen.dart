@@ -294,7 +294,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                   else if (catCtrl.error.value != null)
                     const Text(
                       'Kategoriler yüklenemedi',
-                      style: TextStyle(color: AppColors.textSecondary),
+                      style: TextStyle(color: AppColors.onSurfaceVariant),
                     )
                   else
                     _CategorySelector(
@@ -456,7 +456,7 @@ class _ImagePickerSection extends StatelessWidget {
                         imageUrl: imageUrls[i],
                         fit: BoxFit.cover,
                         errorWidget: (_, __, ___) => Container(
-                          color: AppColors.background,
+                          color: AppColors.surfaceContainerLow,
                           alignment: Alignment.center,
                           child: const Icon(Icons.broken_image_outlined),
                         ),
@@ -505,9 +505,9 @@ class _AddImageTile extends StatelessWidget {
         width: 90,
         height: 90,
         decoration: BoxDecoration(
-          color: AppColors.background,
+          color: AppColors.surfaceContainerLow,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: AppColors.outlineVariant),
         ),
         alignment: Alignment.center,
         child: isUploading
@@ -517,7 +517,7 @@ class _AddImageTile extends StatelessWidget {
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
             : const Icon(Icons.add_a_photo_outlined,
-                color: AppColors.textSecondary),
+                color: AppColors.onSurfaceVariant),
       ),
     );
   }

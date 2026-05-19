@@ -39,8 +39,9 @@ type RedisConfig struct {
 }
 
 type JWTConfig struct {
-	Secret            string
-	AccessTokenExpiry time.Duration
+	Secret               string
+	AccessTokenExpiry    time.Duration
+	RefreshTokenExpiry   time.Duration
 }
 
 type OTPConfig struct {
@@ -75,6 +76,11 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("invalid JWT_ACCESS_TOKEN_EXPIRY: %w", err)
 	}
 
+	jwtRefreshExpiry, err := time.ParseDuration(getEnv("JWT_REFRESH_TOKEN_EXPIRY", "168h"))
+	if err != nil {
+		return nil, fmt.Errorf("invalid JWT_REFRESH_TOKEN_EXPIRY: %w", err)
+	}
+
 	otpExpiry, _ := strconv.Atoi(getEnv("OTP_EXPIRY_SECONDS", "300"))
 	otpMaxAttempts, _ := strconv.Atoi(getEnv("OTP_MAX_ATTEMPTS", "3"))
 	otpCooldown, _ := strconv.Atoi(getEnv("OTP_RESEND_COOLDOWN_SECONDS", "60"))
@@ -106,8 +112,9 @@ func Load() (*Config, error) {
 			Password: getEnv("REDIS_PASSWORD", ""),
 		},
 		JWT: JWTConfig{
-			Secret:            mustEnv("JWT_SECRET"),
-			AccessTokenExpiry: jwtExpiry,
+			Secret:             mustEnv("JWT_SECRET"),
+			AccessTokenExpiry:  jwtExpiry,
+			RefreshTokenExpiry: jwtRefreshExpiry,
 		},
 		OTP: OTPConfig{
 			ExpirySeconds:         otpExpiry,

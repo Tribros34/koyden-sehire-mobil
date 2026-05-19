@@ -2,6 +2,8 @@ package auth
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -12,14 +14,21 @@ import (
 )
 
 type Service struct {
-	repo      *Repository
-	rdb       *redis.Client
-	jwtSecret string
-	jwtExpiry time.Duration
+	repo                *Repository
+	rdb                 *redis.Client
+	jwtSecret           string
+	jwtExpiry           time.Duration
+	refreshTokenExpiry  time.Duration
 }
 
-func NewService(repo *Repository, rdb *redis.Client, jwtSecret string, jwtExpiry time.Duration) *Service {
-	return &Service{repo: repo, rdb: rdb, jwtSecret: jwtSecret, jwtExpiry: jwtExpiry}
+func NewService(repo *Repository, rdb *redis.Client, jwtSecret string, jwtExpiry, refreshTokenExpiry time.Duration) *Service {
+	return &Service{
+		repo:               repo,
+		rdb:                rdb,
+		jwtSecret:          jwtSecret,
+		jwtExpiry:          jwtExpiry,
+		refreshTokenExpiry: refreshTokenExpiry,
+	}
 }
 
 func (s *Service) Login(req *LoginRequest) (*LoginResponse, error) {
@@ -41,13 +50,20 @@ func (s *Service) Login(req *LoginRequest) (*LoginResponse, error) {
 		return nil, apperrors.ErrInternal
 	}
 
+	refreshToken, err := s.issueRefreshToken(context.Background(), user.ID)
+	if err != nil {
+		return nil, apperrors.ErrInternal
+	}
+
 	return &LoginResponse{
-		AccessToken: token,
+		AccessToken:  token,
+		RefreshToken: refreshToken,
 		User: UserInfo{
-			ID:    user.ID,
-			Name:  user.FullName,
-			Phone: user.Phone,
-			Role:  user.Role,
+			ID:     user.ID,
+			Name:   user.FullName,
+			Phone:  user.Phone,
+			Role:   user.Role,
+			Status: user.Status,
 		},
 	}, nil
 }
@@ -93,13 +109,66 @@ func (s *Service) RegisterCustomer(req *RegisterCustomerRequest) (*LoginResponse
 		return nil, apperrors.ErrInternal
 	}
 
+	refreshToken, err := s.issueRefreshToken(ctx, user.ID)
+	if err != nil {
+		return nil, apperrors.ErrInternal
+	}
+
 	return &LoginResponse{
-		AccessToken: token,
+		AccessToken:  token,
+		RefreshToken: refreshToken,
 		User: UserInfo{
-			ID:    user.ID,
-			Name:  user.FullName,
-			Phone: user.Phone,
-			Role:  user.Role,
+			ID:     user.ID,
+			Name:   user.FullName,
+			Phone:  user.Phone,
+			Role:   user.Role,
+			Status: user.Status,
+		},
+	}, nil
+}
+
+// Refresh validates the given refresh token, issues a new access token and a
+// rotated refresh token (old token is deleted), and returns a full LoginResponse.
+func (s *Service) Refresh(req *RefreshRequest) (*LoginResponse, error) {
+	ctx := context.Background()
+	key := refreshKey(req.RefreshToken)
+
+	userID, err := s.rdb.Get(ctx, key).Result()
+	if err != nil {
+		return nil, apperrors.New("INVALID_REFRESH_TOKEN", "Oturum süresi doldu, lütfen tekrar giriş yapın", 401)
+	}
+
+	user, err := s.repo.FindByID(userID)
+	if err != nil {
+		return nil, apperrors.New("INVALID_REFRESH_TOKEN", "Oturum süresi doldu, lütfen tekrar giriş yapın", 401)
+	}
+
+	if user.Status == "suspended" {
+		return nil, apperrors.New("ACCOUNT_SUSPENDED", "Hesabınız askıya alınmıştır", 403)
+	}
+
+	// Token rotation: delete the old refresh token first.
+	s.rdb.Del(ctx, key)
+
+	accessToken, err := s.generateToken(user)
+	if err != nil {
+		return nil, apperrors.ErrInternal
+	}
+
+	newRefreshToken, err := s.issueRefreshToken(ctx, user.ID)
+	if err != nil {
+		return nil, apperrors.ErrInternal
+	}
+
+	return &LoginResponse{
+		AccessToken:  accessToken,
+		RefreshToken: newRefreshToken,
+		User: UserInfo{
+			ID:     user.ID,
+			Name:   user.FullName,
+			Phone:  user.Phone,
+			Role:   user.Role,
+			Status: user.Status,
 		},
 	}, nil
 }
@@ -118,6 +187,22 @@ func (s *Service) generateToken(user *User) (string, error) {
 		return "", fmt.Errorf("signing token: %w", err)
 	}
 	return signed, nil
+}
+
+func refreshKey(token string) string {
+	return fmt.Sprintf("refresh_token:%s", token)
+}
+
+func (s *Service) issueRefreshToken(ctx context.Context, userID string) (string, error) {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	token := hex.EncodeToString(b)
+	if err := s.rdb.Set(ctx, refreshKey(token), userID, s.refreshTokenExpiry).Err(); err != nil {
+		return "", err
+	}
+	return token, nil
 }
 
 // validPhone matches the same 05XXXXXXXXX format enforced by the OTP service,

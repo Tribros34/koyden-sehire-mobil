@@ -98,7 +98,7 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen> {
                   variant: AppButtonVariant.secondary,
                   onPressed: () => setState(() => _phoneRevealed = true),
                   icon: const Icon(Icons.phone_outlined,
-                      color: AppColors.primary),
+                      color: AppColors.primaryContainer),
                 )
               else ...[
                 Container(
@@ -107,12 +107,12 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen> {
                     vertical: 12,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.background,
+                    color: AppColors.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.phone, color: AppColors.primary),
+                      const Icon(Icons.phone, color: AppColors.primaryContainer),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -157,7 +157,7 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen> {
                 padding: EdgeInsets.all(16),
                 child: Text(
                   'Ürünler yüklenemedi',
-                  style: TextStyle(color: AppColors.textSecondary),
+                  style: TextStyle(color: AppColors.onSurfaceVariant),
                 ),
               )
             else if (_ctrl.products.isEmpty)
@@ -165,7 +165,7 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen> {
                 padding: EdgeInsets.symmetric(vertical: 16),
                 child: Text(
                   'Bu üreticinin aktif ürünü yok.',
-                  style: TextStyle(color: AppColors.textSecondary),
+                  style: TextStyle(color: AppColors.onSurfaceVariant),
                 ),
               )
             else
@@ -199,13 +199,13 @@ class _Header extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: 56,
-          backgroundColor: AppColors.background,
+          backgroundColor: AppColors.surfaceContainerLow,
           backgroundImage: profile.profileImageUrl == null
               ? null
               : CachedNetworkImageProvider(profile.profileImageUrl!),
           child: profile.profileImageUrl == null
               ? const Icon(Icons.person,
-                  size: 56, color: AppColors.textSecondary)
+                  size: 56, color: AppColors.onSurfaceVariant)
               : null,
         ),
         const SizedBox(height: 12),
@@ -226,9 +226,9 @@ class _Header extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.background,
+                color: AppColors.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: AppColors.outlineVariant),
               ),
               child: Text(
                 producerTypeLabel(profile.producerType),
@@ -244,7 +244,7 @@ class _Header extends StatelessWidget {
             profile.district,
             if (profile.village != null) profile.village,
           ].whereType<String>().join(' • '),
-          style: const TextStyle(color: AppColors.textSecondary),
+          style: const TextStyle(color: AppColors.onSurfaceVariant),
         ),
       ],
     );

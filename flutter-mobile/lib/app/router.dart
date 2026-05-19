@@ -33,6 +33,7 @@ import 'package:koyden_sehire/views/public/public_farmer_profile_screen.dart';
 import 'package:koyden_sehire/views/public/home_screen.dart';
 import 'package:koyden_sehire/views/public/product_detail_screen.dart';
 import 'package:koyden_sehire/views/public/product_list_screen.dart';
+import 'package:koyden_sehire/views/customer/customer_profile_screen.dart';
 import 'package:koyden_sehire/views/splash/splash_screen.dart';
 
 // Public routes are accessible to logged-out users AND to logged-in
@@ -115,7 +116,7 @@ class AppRouter {
             return '/';
           }
           if (_isPublic(loc)) return null;
-          // No /customer/* routes yet — fall back to home.
+          if (loc.startsWith('/customer')) return null;
           if (loc.startsWith('/farmer') || loc.startsWith('/admin')) {
             return '/';
           }
@@ -186,6 +187,10 @@ class AppRouter {
         GoRoute(
           path: '/register/customer',
           builder: (_, __) => const CustomerRegisterScreen(),
+        ),
+        GoRoute(
+          path: '/customer/profile',
+          builder: (_, __) => const CustomerProfileScreen(),
         ),
         GoRoute(
           path: '/admin',
@@ -292,6 +297,11 @@ class AppRouter {
         GoRoute(
           path: '/farmer/invites',
           builder: (_, __) => const InvitationsScreen(),
+        ),
+        // Customer panel
+        GoRoute(
+          path: '/customer/profile',
+          builder: (_, __) => const CustomerProfileScreen(),
         ),
       ],
     );

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:koyden_sehire/core/api/api_client.dart';
 import 'package:koyden_sehire/core/api/api_endpoints.dart';
 
@@ -9,7 +10,13 @@ class OtpRepository {
     await _api.post(
       ApiEndpoints.otpSend,
       data: {'phone': phone},
-      parse: (_) => null,
+      parse: (data) {
+        final devCode = data['dev_code'];
+        if (devCode != null) {
+          debugPrint('[DEV] OTP kodu: $devCode');
+        }
+        return null;
+      },
     );
   }
 

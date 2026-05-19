@@ -11,6 +11,7 @@ class ApiEndpoints {
 
   // Auth
   static const String login = '/auth/login';
+  static const String authRefresh = '/auth/refresh';
   static const String registerCustomer = '/auth/register/customer';
 
   // OTP

@@ -112,7 +112,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                       'Bu giriş ekranı yalnızca platform yöneticileri içindir.',
                       textAlign: TextAlign.center,
                       style: context.text.bodyMedium?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: AppColors.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 32),
@@ -155,7 +155,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                         'Not: Yönetici paneli yalnızca web üzerinden çalışır.',
                         textAlign: TextAlign.center,
                         style: context.text.bodySmall?.copyWith(
-                          color: AppColors.textSecondary,
+                          color: AppColors.onSurfaceVariant,
                         ),
                       ),
                     ],

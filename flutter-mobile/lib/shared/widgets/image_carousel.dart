@@ -32,12 +32,12 @@ class _ImageCarouselState extends State<ImageCarousel> {
     if (widget.imageUrls.isEmpty) {
       return Container(
         height: widget.height,
-        color: AppColors.border,
+        color: AppColors.outlineVariant,
         alignment: Alignment.center,
         child: const Icon(
           Icons.image_outlined,
           size: 48,
-          color: AppColors.textSecondary,
+          color: AppColors.onSurfaceVariant,
         ),
       );
     }
@@ -54,9 +54,9 @@ class _ImageCarouselState extends State<ImageCarousel> {
               imageUrl: widget.imageUrls[i],
               fit: BoxFit.cover,
               width: double.infinity,
-              placeholder: (_, __) => Container(color: AppColors.border),
+              placeholder: (_, __) => Container(color: AppColors.outlineVariant),
               errorWidget: (_, __, ___) => Container(
-                color: AppColors.border,
+                color: AppColors.outlineVariant,
                 alignment: Alignment.center,
                 child: const Icon(Icons.broken_image_outlined),
               ),

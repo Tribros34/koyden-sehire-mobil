@@ -60,7 +60,21 @@
       "Bash(docker compose *)",
       "Bash(docker exec koyden-sehire-mobil-postgres-1 *)",
       "Bash(docker exec koyden-sehire-mobil-redis-1 *)",
-      "Bash(docker exec koyden-sehire-mobil-api-1 *)"
+      "Bash(docker exec koyden-sehire-mobil-api-1 *)",
+      "PowerShell(docker exec koyden-sehire-mobil-postgres-1 *)",
+      "PowerShell(docker exec koyden-sehire-mobil-redis-1 *)",
+      "mcp__stitch__list_screens",
+      "mcp__stitch__get_project",
+      "Bash(xargs grep -l \"AppColors\\\\.textSecondary\\\\|AppColors\\\\.border\\\\b\\\\|AppColors\\\\.background\\\\b\\\\|AppColors\\\\.primaryDark\\\\|AppColors\\\\.primaryLight\\\\|AppColors\\\\.primaryContainerContainer\")",
+      "Bash(sed -i \"s/const String _font = 'PlusJakartaSans';/const String font = 'PlusJakartaSans';/g\" lib/app/theme.dart)",
+      "Bash(sed -i 's/fontFamily: _font/fontFamily: font/g' lib/app/theme.dart)",
+      "PowerShell(Get-ChildItem \"C:\\\\Android\\\\ndk\\\\\" -ErrorAction SilentlyContinue | Select-Object Name; if \\(-not \\(Test-Path \"C:\\\\Android\\\\ndk\\\\\"\\)\\) { Write-Output \"NDK dir not found\" })",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Android\\\\ndk\" -Force | ForEach-Object { $_.Name })",
+      "PowerShell(New-Item *)",
+      "PowerShell(cmd /c \"dir C:\\\\Projeler\\\\koyden-sehire-mobil\\\\flutter-mobile\\\\assets\\\\fonts\")",
+      "mcp__stitch__list_projects",
+      "mcp__stitch__get_screen",
+      "WebFetch(domain:contribution.usercontent.google.com)"
     ]
   }
 }

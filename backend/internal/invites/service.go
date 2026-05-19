@@ -32,6 +32,8 @@ func (s *Service) Validate(code string) (*ValidateResponse, error) {
 	return &ValidateResponse{
 		Valid:     true,
 		Code:      ic.Code,
+		MaxUses:   ic.MaxUses,
+		UsedCount: ic.UsedCount,
 		Remaining: ic.MaxUses - ic.UsedCount,
 	}, nil
 }

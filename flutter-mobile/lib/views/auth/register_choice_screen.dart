@@ -29,7 +29,7 @@ class RegisterChoiceScreen extends StatelessWidget {
             Text(
               'Hesabınızın türünü seçin. Sonradan değiştirilemez.',
               style: context.text.bodyMedium?.copyWith(
-                color: AppColors.textSecondary,
+                color: AppColors.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 24),
@@ -94,10 +94,10 @@ class _RoleCard extends StatelessWidget {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
+                  color: AppColors.primaryContainer.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: AppColors.primary, size: 28),
+                child: Icon(icon, color: AppColors.primaryContainer, size: 28),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -109,14 +109,14 @@ class _RoleCard extends StatelessWidget {
                     Text(
                       subtitle,
                       style: context.text.bodySmall?.copyWith(
-                        color: AppColors.textSecondary,
+                        color: AppColors.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 12),
                     Text(
                       '$cta →',
                       style: context.text.labelLarge?.copyWith(
-                        color: AppColors.primary,
+                        color: AppColors.primaryContainer,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

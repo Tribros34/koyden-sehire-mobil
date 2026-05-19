@@ -106,7 +106,7 @@ class _FarmerProfileEditScreenState extends State<FarmerProfileEditScreen> {
                 children: [
                   CircleAvatar(
                     radius: 48,
-                    backgroundColor: AppColors.background,
+                    backgroundColor: AppColors.surfaceContainerLow,
                     backgroundImage: p.profileImageUrl == null
                         ? null
                         : CachedNetworkImageProvider(p.profileImageUrl!),
@@ -202,13 +202,13 @@ class _FarmerProfileEditScreenState extends State<FarmerProfileEditScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppColors.background,
+                      color: AppColors.surfaceContainerLow,
                       borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     child: Row(
                       children: [
                         const Icon(Icons.phone_outlined,
-                            color: AppColors.textSecondary),
+                            color: AppColors.onSurfaceVariant),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Column(
@@ -217,7 +217,7 @@ class _FarmerProfileEditScreenState extends State<FarmerProfileEditScreen> {
                               const Text(
                                 'İletişim Telefonu',
                                 style: TextStyle(
-                                  color: AppColors.textSecondary,
+                                  color: AppColors.onSurfaceVariant,
                                   fontSize: 12,
                                 ),
                               ),

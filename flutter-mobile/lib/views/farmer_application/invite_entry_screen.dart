@@ -86,7 +86,7 @@ class _InviteEntryScreenState extends State<InviteEntryScreen> {
                 const Text(
                   'Üretici başvuruları davet sistemiyle alınmaktadır. Lütfen size iletilen davet kodunu girin.',
                   style: TextStyle(
-                    color: AppColors.textSecondary,
+                    color: AppColors.onSurfaceVariant,
                     height: 1.5,
                   ),
                 ),
@@ -150,7 +150,7 @@ class _InviteInfoCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.success.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.success),
       ),
       child: Row(
@@ -171,7 +171,7 @@ class _InviteInfoCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     'Bu kodun $remainingUses kullanım hakkı kaldı.',
-                    style: const TextStyle(color: AppColors.textSecondary),
+                    style: const TextStyle(color: AppColors.onSurfaceVariant),
                   ),
                 ],
               ],

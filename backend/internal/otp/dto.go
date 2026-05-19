@@ -5,8 +5,9 @@ type SendRequest struct {
 }
 
 type SendResponse struct {
-	Message   string `json:"message"`
-	ExpiresIn int    `json:"expires_in"`
+	Message   string  `json:"message"`
+	ExpiresIn int     `json:"expires_in"`
+	DevCode   *string `json:"dev_code,omitempty"`
 }
 
 type VerifyRequest struct {

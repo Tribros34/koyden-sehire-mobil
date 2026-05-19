@@ -40,7 +40,7 @@ class FarmerDashboardScreen extends StatelessWidget {
             return IconButton(
               icon: CircleAvatar(
                 radius: 14,
-                backgroundColor: AppColors.background,
+                backgroundColor: AppColors.surfaceContainerLow,
                 backgroundImage: profile?.profileImageUrl == null
                     ? null
                     : CachedNetworkImageProvider(profile!.profileImageUrl!),
@@ -114,7 +114,7 @@ class _Body extends StatelessWidget {
             _StatCard(
               label: 'Pasif',
               value: data.hiddenCount,
-              color: AppColors.textSecondary,
+              color: AppColors.onSurfaceVariant,
               icon: Icons.visibility_off_outlined,
             ),
             _StatCard(
@@ -148,7 +148,7 @@ class _Body extends StatelessWidget {
             padding: EdgeInsets.symmetric(vertical: 12),
             child: Text(
               'Henüz ürün eklemediniz.',
-              style: TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: AppColors.onSurfaceVariant),
             ),
           )
         else
@@ -176,7 +176,7 @@ class _StatCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,7 +189,7 @@ class _StatCard extends StatelessWidget {
                 child: Text(
                   label,
                   style: const TextStyle(
-                    color: AppColors.textSecondary,
+                    color: AppColors.onSurfaceVariant,
                     fontSize: 12,
                   ),
                 ),
@@ -259,7 +259,7 @@ class _RecentProductTile extends StatelessWidget {
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: AppColors.outlineVariant),
           borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: Row(
@@ -271,15 +271,15 @@ class _RecentProductTile extends StatelessWidget {
                 height: 56,
                 child: product.imageUrls.isEmpty
                     ? Container(
-                        color: AppColors.background,
+                        color: AppColors.surfaceContainerLow,
                         child: const Icon(Icons.image_outlined,
-                            color: AppColors.textSecondary),
+                            color: AppColors.onSurfaceVariant),
                       )
                     : CachedNetworkImage(
                         imageUrl: product.imageUrls.first,
                         fit: BoxFit.cover,
                         errorWidget: (_, __, ___) =>
-                            Container(color: AppColors.background),
+                            Container(color: AppColors.surfaceContainerLow),
                       ),
               ),
             ),
@@ -313,8 +313,8 @@ class _StatusBadge extends StatelessWidget {
       'active' => ('Aktif', AppColors.success),
       'pending' => ('Beklemede', AppColors.warning),
       'rejected' => ('Reddedildi', AppColors.error),
-      'hidden' => ('Pasif', AppColors.textSecondary),
-      _ => (status, AppColors.textSecondary),
+      'hidden' => ('Pasif', AppColors.onSurfaceVariant),
+      _ => (status, AppColors.onSurfaceVariant),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
